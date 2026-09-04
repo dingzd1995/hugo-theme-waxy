@@ -1,0 +1,18 @@
+{{/* 桌面导航 #main-menu 和移动端抽屉共用同一份菜单项，对应原主题 waxy_render_nav_menu()。
+     激活态判断照抄原主题：首页看 is('index')，分类/独立页面看是否就停在那一个页面上
+     （不是看当前文章属于哪个分类），用 $ 拿到调用方传进来的当前页面上下文比较 */}}
+{{ $current := . }}
+<li class="nav__item{{ if .IsHome }} nav__item--active{{ end }}"><a class="nav__link" href="{{ .Site.BaseURL }}">首页</a></li>
+{{/* 分类一律平铺，不做原主题 menuDropdown 那 6 种嵌套/收纳模式 */}}
+{{ range where .Site.Pages "Kind" "term" }}
+  {{ if eq .Parent.Section "category" }}
+  <li class="nav__item{{ if eq $current.Permalink .Permalink }} nav__item--active{{ end }}"><a class="nav__link" href="{{ .Permalink }}">{{ .Title }}</a></li>
+  {{ end }}
+{{ end }}
+{{/* 独立页面：只取内容根目录下的页面（Section 为空），文章的 Kind 同样是 "page"，不能只看 Kind。
+     搜索页只通过顶部搜索框进入，隐私政策不放导航，两者都从菜单里排除，但页面本身还在，直接访问 URL 仍然可用 */}}
+{{ range where .Site.Pages "Kind" "page" }}
+  {{ if and (eq .Section "") (ne .RelPermalink "/search/") (ne .RelPermalink "/privacy-policy.html") }}
+  <li class="nav__item{{ if eq $current.Permalink .Permalink }} nav__item--active{{ end }}"><a class="nav__link" href="{{ .Permalink }}">{{ .Title }}</a></li>
+  {{ end }}
+{{ end }}

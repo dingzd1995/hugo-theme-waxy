@@ -1,0 +1,169 @@
+<aside class="layout__sidebar sidebar">
+
+{{ $terms := where .Site.Pages "Kind" "term" }}
+{{ $blogPages := where .Site.RegularPages "Section" "blog" }}
+
+{{ if in .Site.Params.sidebarBlock "ShowAbouts" }}
+{{ $catCount := 0 }}
+{{ range $terms }}{{ if eq .Parent.Section "category" }}{{ $catCount = add $catCount 1 }}{{ end }}{{ end }}
+{{ $tagCount := 0 }}
+{{ range $terms }}{{ if and (eq .Parent.Section "tag") (gt (len .Pages) 0) }}{{ $tagCount = add $tagCount 1 }}{{ end }}{{ end }}
+{{/* 关于我的 */}}
+<div class="widget">
+  <h4 class="widget__title">关于</h4>
+  {{ with .Site.Params.cardBg }}<div class="card__bg" style="background-image: url('{{ . }}')"></div>{{ end }}
+  <div class="card">
+    <div class="card__info">
+      <img class="card__avatar" src="{{ .Site.Params.cardImg }}" alt="{{ .Site.Params.cardName }}">
+      <div class="card__name">{{ .Site.Params.cardName }}</div>
+      <div class="card__bio">{{ .Site.Params.cardDescription }}</div>
+    </div>
+    {{/* 社交图标：一行一条 "平台名,链接"，图标是 social-{平台名小写}，
+         对应原主题 add_cardlinks()；平台名在 data/icons.yaml 里没有对应图标的直接跳过 */}}
+    {{ with .Site.Params.cardlinks }}
+    <div class="card__links">
+      {{ range split (strings.TrimSpace .) "\n" }}
+        {{ $row := split (strings.TrimSpace .) "," }}
+        {{ if eq (len $row) 2 }}
+          {{ $name := index $row 0 }}
+          {{ $iconHtml := partial "icon.html" (dict "name" (printf "social-%s" (lower $name))) }}
+          {{ if $iconHtml }}
+          <a href="{{ index $row 1 }}" title="{{ $name }}">{{ $iconHtml | safeHTML }}</a>
+          {{ end }}
+        {{ end }}
+      {{ end }}
+    </div>
+    {{ end }}
+    <div class="card__stats">
+      <div class="card__stat">
+        <div class="card__stat-label">文章</div>
+        <div class="card__stat-value">{{ len $blogPages }}</div>
+      </div> 
+      <div class="card__stat">
+        <div class="card__stat-label">页面</div>
+        <div class="card__stat-value">{{ len (where .Site.Pages "Kind" "page") }}</div>
+      </div>
+      <div class="card__stat">
+        <div class="card__stat-label">分类</div>
+        <div class="card__stat-value">{{ $catCount }}</div>
+      </div>
+      <div class="card__stat">
+        <div class="card__stat-label">标签</div>
+        <div class="card__stat-value">{{ $tagCount }}</div>
+      </div>
+    </div>
+    {{ with .Site.Params.startTime }}
+    <div class="card__footer">
+      <span>已在风雨中度过 <span id="waxy-site-age" data-start="{{ . }}"></span></span>
+    </div>
+    {{ end }}
+  </div>
+</div>
+{{ end }}
+
+{{/* 目录 widget：只在文章单页 + showToc 开启 + 标题数 >= 3 时显示 */}}
+{{ if and (eq .Section "blog") (eq .Kind "page") site.Params.showtoc }}
+  {{ $tocItems := partial "toc.html" . }}
+  {{ if ge (len $tocItems) 3 }}
+  <div class="widget widget--toc" id="waxy-toc-sidebar">
+    <div class="waxy-toc-sidebar__header">
+      <h4 class="widget__title">目录</h4>
+    </div>
+    <ul class="waxy-toc-sidebar__list widget__body">
+      {{ range $tocItems }}
+      <li class="waxy-toc-sidebar__item waxy-toc-sidebar__item--h{{ .level }}">
+        <a class="waxy-toc-sidebar__link" href="#{{ .id }}">{{ .text }}</a>
+      </li>
+      {{ end }}
+    </ul>
+    <div class="waxy-toc-sidebar__footer">
+      <div class="waxy-toc-sidebar__bar"><div class="waxy-toc-sidebar__bar-fill" id="waxy-toc-bar"></div></div>
+      <span class="waxy-toc-sidebar__progress" id="waxy-toc-progress">0%</span>
+    </div>
+  </div>
+  {{ end }}
+{{ end }}
+
+{{/* 分类列表 */}}
+{{ if in .Site.Params.sidebarBlock "ShowCategory" }}
+<div class="widget">
+  <h4 class="widget__title">分类</h4>
+  <div class="widget__body">
+    <ul class="menu-list">
+      {{ range $terms }}
+        {{ if eq .Parent.Section "category" }}
+        <li><a href="{{ .Permalink }}" title="{{ .Title }}"><span class="menu-list__title">{{ .Title }}</span><span class="menu-list__count">{{ len .Pages }}</span></a></li>
+        {{ end }}
+      {{ end }}
+    </ul>
+  </div>
+</div>
+{{ end }}
+
+{{/* 标签列表 */}}
+{{ if in .Site.Params.sidebarBlock "ShowTags" }}
+<div class="widget">
+  <h4 class="widget__title">标签</h4>
+  <div class="widget__body tag-cloud">
+    {{/* 对应原主题 ignoreZeroCount:true——没有文章挂在下面的标签（这次迁移没生成
+         _index.md 前就存在、纯历史遗留的空标签）不显示 */}}
+    {{ range $terms }}
+      {{ if and (eq .Parent.Section "tag") (gt (len .Pages) 0) }}<a rel="tag" href="{{ .Permalink }}">{{ .Title }}({{ len .Pages }})</a>{{ end }}
+    {{ end }}
+  </div>
+</div>
+{{ end }}
+
+{{/* 最新文章 */}}
+{{ if in .Site.Params.sidebarBlock "ShowRecentPosts" }}
+<div class="widget">
+  <h4 class="widget__title">最新文章</h4>
+  <div class="widget__body recent-posts">
+    {{ range first 5 $blogPages }}
+    <div class="recent-posts__item">
+      <a href="{{ .Permalink }}" class="recent-posts__title">{{ .Title }}</a>
+      <div class="recent-posts__date">{{ .Date.Format "2006年01月02日" }}</div>
+    </div>
+    {{ end }}
+  </div>
+</div>
+{{ end }}
+
+{{/* 评论系统还是占位状态，没有数据源，"最近回复" widget 先不做 */}}
+
+{{/* 归档列表 */}}
+{{ if in .Site.Params.sidebarBlock "ShowArchive" }}
+<div class="widget">
+  <h4 class="widget__title">归档列表</h4>
+  <div class="widget__body">
+    <ul class="menu-list">
+      {{ range $blogPages.GroupByDate "2006年 01月" }}
+      <li><a href="{{ (index .Pages 0).Permalink }}"><span class="menu-list__title">{{ .Key }}</span><span class="menu-list__count">{{ len .Pages }}篇</span></a></li>
+      {{ end }}
+    </ul>
+  </div>
+</div>
+{{ end }}
+
+
+{{/* 友情链接 */}}
+{{ if in .Site.Params.sidebarBlock "ShowLinks" }}
+<div class="widget">
+  <h4 class="widget__title">友情链接</h4>
+  <div class="widget__body recent-posts">
+    {{ range split (strings.TrimSpace .Site.Params.links) "\n" }}
+      {{ $row := split (strings.TrimSpace .) "," }}
+      {{ if ge (len $row) 4 }}
+      <div class="recent-posts__item">
+        <a rel="noopener" href="{{ index $row 1 }}" title="{{ index $row 3 }}" target="_blank" class="recent-posts__title">
+          <img src="{{ index $row 2 }}" alt="{{ index $row 0 }} logo" height="32" width="32" />
+          <span style="margin-left: 10px;">{{ index $row 0 }}</span>
+        </a>
+      </div>
+      {{ end }}
+    {{ end }}
+  </div>
+</div>
+{{ end }}
+
+</aside>

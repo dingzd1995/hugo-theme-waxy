@@ -1,0 +1,11 @@
+{
+  "name": "hugo-waxy",
+  "private": true,
+  "scripts": {
+    "build": "hugo --minify && pagefind --site public",
+    "dev": "hugo server -D"
+  },
+  "devDependencies": {
+    "pagefind": "^1.5.2"
+  }
+}

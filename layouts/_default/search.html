@@ -1,0 +1,29 @@
+{{/* 对应原主题：Typecho 没有独立 search.php，搜索结果复用 index.php 的文章列表模板。
+     这里换成 Pagefind（构建期索引 + 浏览器端搜索），结果由 static/js/search.js 异步渲染，
+     构建时必须先 hugo 再跑 pagefind 索引 public/，见 package.json 里的 build 脚本。 */}}
+{{ define "main" }}
+<article class="post post--single">
+  <header class="post__head">
+    <h1 class="post__title">{{ .Title }}</h1>
+    <div class="post__border"></div>
+  </header>
+  <section class="post-content post__content">
+    <form class="search-form" id="search-page-form" role="search">
+      <label for="search-page-input" class="sr-only">搜索关键字</label>
+      <input type="text" id="search-page-input" class="search-form__input" placeholder="输入关键字搜索" />
+      <button type="submit" class="search-form__btn" aria-label="搜索"></button>
+    </form>
+    <div id="search-status" class="archive-tip" hidden></div>
+    <div id="search-results" class="search-result-list"></div>
+    {{/* 分页箭头 + 搜索状态卡片图标：跟 pagination.html/empty-state 用同一份 data/icons.yaml，
+         search.js 克隆这里的 markup 而不是自己内联一份 SVG，避免图标改了要同步改两处 */}}
+    <template id="search-icon-left">{{ partial "icon.html" (dict "name" "menu-left") }}</template>
+    <template id="search-icon-right">{{ partial "icon.html" (dict "name" "menu-right") }}</template>
+    <template id="search-icon-empty">{{ partial "icon.html" (dict "name" "folder-open") }}</template>
+    <template id="search-icon-error">{{ partial "icon.html" (dict "name" "exclamation-sign") }}</template>
+    <template id="search-icon-unavailable">{{ partial "icon.html" (dict "name" "question-sign") }}</template>
+  </section>
+</article>
+<script>window.PAGEFIND_BASE = "{{ "pagefind/" | relURL }}";</script>
+<script src="{{ "js/search.js" | relURL }}" defer></script>
+{{ end }}

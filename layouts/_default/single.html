@@ -1,0 +1,11 @@
+{{ define "main" }}
+<article class="post post--single" data-pagefind-body>
+  <header class="post__head">
+    <h1 class="post__title">{{ .Title }}</h1>
+    <div class="post__border"></div>
+  </header>
+  <section class="post-content post__content">
+    {{ .Content }}
+  </section>
+</article>
+{{ end }}

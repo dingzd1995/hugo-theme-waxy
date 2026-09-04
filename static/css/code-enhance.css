@@ -1,0 +1,38 @@
+/* noClasses:true 之后 chroma 不再输出 .chroma 这个 class（颜色全内联在 <pre style="..."> 上，
+   天然比任何 class 选择器优先级都高，这里也不用再覆盖背景色），只能靠 .highlight > pre 选中。
+   padding/border-left 原来在 waxy-main.css 的 .post-content pre 通用规则里，
+   现在整个搬到这里统一管，避免两处规则打架 */
+.post-content .highlight pre {
+    padding: 7px;
+    border-left: 3px solid var(--waxy-primary-light);
+    padding-left: 10px;
+    border-radius: var(--waxy-radius);
+}
+
+/* 语言标签 + 复制按钮：原主题用 Prism 的 toolbar 插件实现，
+   Chroma 是纯构建期高亮、没有这个 JS 插件，这里用原生 JS 补上（见 js/code-enhance.js），
+   .code-toolbar/.toolbar/.toolbar-item 复用 waxy-main.css 里已有的配色规则 */
+.highlight {
+    position: relative;
+}
+.highlight .toolbar {
+    position: absolute;
+    top: 4px;
+    right: 6px;
+    display: flex;
+    gap: 6px;
+    opacity: 0;
+    transition: opacity .15s;
+}
+.highlight:hover .toolbar,
+.highlight .toolbar:focus-within {
+    opacity: 1;
+}
+.highlight .toolbar-item {
+    font-size: 12px;
+    line-height: 1.6;
+    padding: 2px 8px;
+    cursor: pointer;
+    border: none;
+    font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
+}

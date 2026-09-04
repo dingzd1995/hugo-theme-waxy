@@ -1,0 +1,5 @@
+{{- /* 分类/标签徽章显示用的中文名，不是 URL slug。
+     入参 dict: taxonomy ("category"/"tag"), slug (string)。
+     找不到对应 term 页面时（理论不该发生）退回显示 slug 本身，不让页面开天窗 */ -}}
+{{- $page := site.GetPage (printf "/%s/%s" .taxonomy .slug) -}}
+{{- if $page -}}{{ $page.Title }}{{- else -}}{{ .slug }}{{- end -}}

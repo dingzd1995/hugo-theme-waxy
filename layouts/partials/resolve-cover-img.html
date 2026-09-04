@@ -1,0 +1,26 @@
+{{- /* 对应原主题 functions.php 的 waxy_resolve_cover_img() + getFirstImg()：
+     优先用 front matter 的 img 字段，否则取正文里第一张 <img> 的图片地址，
+     再否则从 site.Params.firstImage 兜底图池随机挑一张（需 site.Params.findFirstImage 开启）。
+     入参: page（. 本身即可），返回图片 URL 字符串，没有则返回空字符串 */ -}}
+{{- $img := "" -}}
+{{- if .Params.img -}}
+  {{- $img = .Params.img -}}
+{{- else -}}
+  {{- /* render-image.html 懒加载开启时正文里的 <img> 是 data-src="真实图" src="占位图"，
+       必须优先找 data-src，不然会把懒加载占位图当成封面——之前用 <img[^>]+src="..." 匹配，
+       "data-src" 里也含有子串 "src="，贪婪匹配会先吃到那个假的，是踩过的坑 */ -}}
+  {{- $dataSrcTags := findRE "data-src=\"[^\"]+\"" .Content 1 -}}
+  {{- if $dataSrcTags -}}
+    {{- $img = replaceRE "^data-src=\"([^\"]+)\"$" "$1" (index $dataSrcTags 0) -}}
+  {{- else -}}
+    {{- $srcTags := findRE "<img[^>]+ src=\"[^\"]+\"" .Content 1 -}}
+    {{- if $srcTags -}}
+      {{- $img = replaceRE "^.* src=\"([^\"]+)\".*$" "$1" (index $srcTags 0) -}}
+    {{- end -}}
+  {{- end -}}
+  {{- if and (not $img) site.Params.findfirstimage site.Params.firstimage -}}
+    {{- $pool := site.Params.firstimage -}}
+    {{- $img = index $pool (mod (hash.FNV32a .RelPermalink) (len $pool)) -}}
+  {{- end -}}
+{{- end -}}
+{{- return $img -}}

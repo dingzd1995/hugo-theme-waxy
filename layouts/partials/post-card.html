@@ -1,0 +1,40 @@
+{{/* 首页/归档/分类/标签列表用的文章卡片，对应原主题 post_list.php 的"全文模式"分支 */}}
+{{ $listImg := partial "resolve-cover-img.html" . }}
+{{ if .Params.hideCover }}{{ $listImg = "" }}{{ end }}
+<article id="post-{{ .Params.slug }}" class="post">
+  {{ if .Params.star }}<div class="post__featured" title="推荐文章">{{ partial "icon.html" (dict "name" "star") }}</div>{{ end }}
+  <div class="post__head{{ if $listImg }} post__head--has-bg{{ end }}"{{ if $listImg }} style="--post-bg:url('{{ $listImg }}')"{{ end }}>
+    <h1 class="post__title"><a href="{{ .Permalink }}">{{ .Title }}</a></h1>
+    <div class="post-meta">
+      <span class="post-meta__author">{{ partial "icon.html" (dict "name" "user") }}{{ .Site.Params.authorName }}</span>
+      <time class="post-meta__date" datetime="{{ .Date.Format "2006-01-02" }}">{{ partial "icon.html" (dict "name" "calendar") }}{{ .Date.Format "2006年01月02日" }}</time>
+      {{ if .Params.category }}
+      <span class="post-meta__cat">
+        {{ partial "badge-group.html" (dict "items" .Params.category "icon" "folder-open" "taxonomy" "category" "modifier" " excerpt__badge--cat") }}
+      </span>
+      {{ end }}
+      <span class="post-meta__count">{{ partial "icon.html" (dict "name" "toc") }}{{ .WordCount }} 字</span>
+    </div>
+    <div class="post__border"></div>
+  </div>
+  <div class="post-content post__content" data-clamp-total="800">
+    {{ .Summary }}
+  </div>
+  <div class="readall">
+    <div class="readall__mask"></div>
+    <a href="{{ .Permalink }}" class="readall__link">阅读全文</a>
+    {{ partial "icon.html" (dict "name" "chevron-down" "class" "readall__icon") }}
+  </div>
+  <footer class="post__footer">
+    {{ if .Params.tag }}
+    <div class="post__tags">
+      <div class="excerpt__badges">
+        {{ partial "badge-group.html" (dict "items" .Params.tag "icon" "tag" "taxonomy" "tag") }}
+      </div>
+    </div>
+    {{ end }}
+    <div class="post__permalink">
+      <a href="{{ .Permalink }}#comments" class="btn btn--default">前往评论</a>
+    </div>
+  </footer>
+</article>

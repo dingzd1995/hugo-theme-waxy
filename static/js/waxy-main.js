@@ -1,0 +1,535 @@
+/* 加载动画淡出（transitionend 驱动；同时兜底一个定时器强制隐藏——
+   如果页面加载卡顿（比如某个资源卡在重定向）导致 transitionend 没触发，
+   这层 position:fixed 的全屏遮罩会一直留在 DOM 里挡住所有点击，必须保证它总会被移除） */
+function initLoadingFade() {
+    var el = document.getElementById('loading');
+    if (!el) return;
+    var fallback = setTimeout(hide, 600);
+    function hide() {
+        clearTimeout(fallback);
+        el.style.display = 'none';
+    }
+    el.addEventListener('transitionend', hide, { once: true });
+    el.style.transition = 'opacity 0.5s';
+    el.style.opacity = '0';
+}
+
+/* 回到顶部按钮 */
+function initBackToTop() {
+    var bt = document.getElementById('back-to-top');
+    if (!bt) return;
+    bt.style.display = 'flex';
+    bt.addEventListener('click', function() {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+}
+
+/* 抽屉菜单（导航 + 侧边栏，<1000px）
+   导航部分现在由 PHP 直接渲染进 .waxy-drawer__nav（见 header.php），全部展开显示，
+   不需要 JS 克隆、也不需要点击展开的交互逻辑；这里只需要在首次打开时把侧边栏克隆进来 */
+function initNavToggle() {
+    var btn = document.querySelector('[data-action="nav-toggle"]');
+    var overlay = document.getElementById('waxy-drawer-overlay');
+    var drawer = document.getElementById('waxy-drawer');
+    var drawerBody = document.getElementById('waxy-drawer-body');
+
+    if (!btn || !drawer) return;
+
+    /* 首次在移动端时填充抽屉侧边栏 */
+    if (window.innerWidth < 1000 && drawerBody && !drawerBody.querySelector('.waxy-drawer__sidebar')) {
+        var sidebar = document.querySelector('.layout__sidebar');
+        if (sidebar) {
+            var sidebarWrap = document.createElement('div');
+            sidebarWrap.className = 'waxy-drawer__sidebar';
+            sidebarWrap.appendChild(sidebar.cloneNode(true));
+            drawerBody.appendChild(sidebarWrap);
+        }
+    }
+
+    function openDrawer() {
+        drawer.classList.add('is-open');
+        if (overlay) overlay.classList.add('is-open');
+        btn.classList.add('is-open');
+        document.body.style.overflow = 'hidden';
+    }
+    function closeDrawer() {
+        drawer.classList.remove('is-open');
+        if (overlay) overlay.classList.remove('is-open');
+        btn.classList.remove('is-open');
+        document.body.style.overflow = '';
+    }
+
+    btn.addEventListener('click', function() {
+        drawer.classList.contains('is-open') ? closeDrawer() : openDrawer();
+    });
+    if (overlay) overlay.addEventListener('click', closeDrawer);
+}
+
+/* 置顶文章滚动 */
+function initStickySlider() {
+    var parent = document.querySelector('.js-slide-list');
+    if (!parent) return;
+    var items = parent.querySelectorAll('li');
+    if (items.length < 2) return;
+    setInterval(function() {
+        var first = parent.querySelector('li:first-child');
+        if (!first) return;
+        var height = first.offsetHeight;
+        first.style.transition = 'margin-top 0.5s ease';
+        first.style.marginTop = '-' + height + 'px';
+        setTimeout(function() {
+            first.style.transition = '';
+            first.style.marginTop = '0';
+            parent.appendChild(first);
+        }, 500);
+    }, 2000);
+}
+
+/* Alert 关闭按钮 */
+function initAlertDismiss() {
+    document.addEventListener('click', function(e) {
+        var btn = e.target.closest('[data-action="alert-close"]');
+        if (btn) {
+            var alert = btn.closest('.alert');
+            if (alert) alert.remove();
+        }
+    });
+}
+
+/* 收缩框 */
+function initShrinkBox() {
+    document.addEventListener('click', function(e) {
+        var title = e.target.closest('[data-action="shrink-toggle"]');
+        if (title) {
+            var box = title.closest('.shrink-box');
+            if (box) box.classList.toggle('shrink-box--active');
+        }
+    });
+}
+
+/* 图片懒加载（IntersectionObserver，JS替换 data-src，防爬虫）*/
+function initLazyLoad() {
+    var images = document.querySelectorAll('img[data-src]');
+    if (!images.length) return;
+
+    /* 为每张图插入 CSS loader 占位，观察占位元素（img display:none 无法触发 IO）*/
+    var pairs = [];
+    images.forEach(function(img) {
+        var ph = document.createElement('div');
+        ph.className = 'waxy-lazy-placeholder';
+        var inner = document.createElement('div');
+        inner.className = 'waxy-diamond-loader';
+        inner.innerHTML = '<span></span><span></span><span></span><span></span>';
+        ph.appendChild(inner);
+        img.parentNode.insertBefore(ph, img);
+        pairs.push({ img: img, ph: ph });
+    });
+
+    function loadImage(img, ph) {
+        var src = img.dataset.src;
+        var preload = new Image();
+        preload.onload = function() {
+            img.removeAttribute('data-src');
+            img.src = src;
+            ph.remove();
+            img.classList.add('waxy-lazy-loaded');
+        };
+        preload.onerror = function() {
+            img.removeAttribute('data-src');
+            img.src = src;
+            ph.remove();
+        };
+        preload.src = src;
+    }
+
+    if ('IntersectionObserver' in window) {
+        var map = new Map();
+        pairs.forEach(function(p) { map.set(p.ph, p.img); });
+        var io = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+                if (entry.isIntersecting) {
+                    var ph = entry.target;
+                    io.unobserve(ph);
+                    loadImage(map.get(ph), ph);
+                }
+            });
+        }, { rootMargin: '200px 0px' });
+        pairs.forEach(function(p) { io.observe(p.ph); });
+    } else {
+        pairs.forEach(function(p) { loadImage(p.img, p.ph); });
+    }
+}
+
+/* 摘要模式封面图懒加载（IntersectionObserver，data-bg 换成真实 background-image，防爬虫）。
+   跟 initLazyLoad 分开：这里是定宽高的 div 背景图，本身就占好了位置，不用像 <img> 那样
+   再插一个占位盒子撑开布局；加载中显示转圈图标，图片预加载完成后走 CSS 的 opacity
+   过渡淡入（真实图层在 ::after 上，见 waxy-main.css 的 .excerpt__img--loaded），
+   而不是背景图一到位就硬切 */
+function initLazyBg() {
+    var boxes = document.querySelectorAll('.excerpt__img[data-bg]');
+    if (!boxes.length) return;
+
+    boxes.forEach(function(el) {
+        var loading = document.createElement('div');
+        loading.className = 'excerpt__img__loading';
+        loading.innerHTML = '<div class="waxy-diamond-loader"><span></span><span></span><span></span><span></span></div>';
+        el.appendChild(loading);
+    });
+
+    function loadBg(el) {
+        var src = el.dataset.bg;
+        el.removeAttribute('data-bg');
+        var preload = new Image();
+        function settle() {
+            var loading = el.querySelector('.excerpt__img__loading');
+            if (loading) loading.remove();
+        }
+        preload.onload = function() {
+            el.style.setProperty('--excerpt-img-src', "url('" + src + "')");
+            el.classList.add('excerpt__img--loaded');
+            settle();
+        };
+        preload.onerror = settle;
+        preload.src = src;
+    }
+
+    if ('IntersectionObserver' in window) {
+        var io = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+                if (entry.isIntersecting) {
+                    io.unobserve(entry.target);
+                    loadBg(entry.target);
+                }
+            });
+        }, { rootMargin: '200px 0px' });
+        boxes.forEach(function(el) { io.observe(el); });
+    } else {
+        boxes.forEach(loadBg);
+    }
+}
+
+/* 列表页全文模式：整个条目（标题+内容+底部）渲染总高度超过阈值时，
+   把内容区裁到固定高度并露出"阅读全文"，否则完整展示。
+   用 ResizeObserver 而非一次性测量，因为懒加载图片会在加载完成后撑高内容 */
+function initContentClamp() {
+    var contents = document.querySelectorAll('[data-clamp-total]');
+    if (!contents.length) return;
+
+    var entries = [];
+    contents.forEach(function(content) {
+        var article = content.closest('.post');
+        var readall = content.nextElementSibling;
+        if (!article || !readall || !readall.classList.contains('readall')) return;
+        entries.push({
+            content: content,
+            article: article,
+            readall: readall,
+            totalLimit: parseInt(content.getAttribute('data-clamp-total'), 10) || 800
+        });
+    });
+
+    // 先统一读取所有条目的 scrollHeight（读阶段），再统一写入 class/hidden（写阶段），
+    // 避免逐条目读写交替触发强制同步布局（layout thrashing）
+    var overflowing = entries.filter(function(entry) {
+        return entry.article.scrollHeight > entry.totalLimit;
+    });
+    overflowing.forEach(function(entry) {
+        entry.content.classList.add('post__content--clamped');
+        entry.readall.hidden = false;
+    });
+
+    if (!('ResizeObserver' in window)) return;
+    entries.forEach(function(entry) {
+        if (overflowing.indexOf(entry) !== -1) return;
+        var ro = new ResizeObserver(function() {
+            if (entry.article.scrollHeight <= entry.totalLimit) return;
+            entry.content.classList.add('post__content--clamped');
+            entry.readall.hidden = false;
+            ro.disconnect();
+        });
+        ro.observe(entry.article);
+    });
+}
+
+/* 图片灯箱 */
+function initLightbox() {
+    if (!document.querySelector('[data-lightbox]')) return;
+
+    var overlay = document.createElement('div');
+    overlay.id = 'waxy-lightbox';
+    var closeBtn = document.createElement('span');
+    closeBtn.id = 'waxy-lightbox-close';
+    closeBtn.innerHTML = '&times;';
+    var spinner = document.createElement('div');
+    spinner.id = 'waxy-lightbox-spinner';
+    var img = document.createElement('img');
+    overlay.appendChild(closeBtn);
+    overlay.appendChild(spinner);
+    overlay.appendChild(img);
+    document.body.appendChild(overlay);
+
+    function openLightbox(src) {
+        img.style.opacity = '0';
+        overlay.classList.add('active', 'waxy-lb-loading');
+        img.onload = function() {
+            overlay.classList.remove('waxy-lb-loading');
+            img.style.opacity = '1';
+        };
+        img.onerror = function() { overlay.classList.remove('waxy-lb-loading'); };
+        img.src = src;
+    }
+    function closeLightbox() {
+        overlay.classList.remove('active', 'waxy-lb-loading');
+        img.src = '';
+        img.style.opacity = '0';
+    }
+
+    closeBtn.addEventListener('click', closeLightbox);
+    overlay.addEventListener('click', closeLightbox);
+    img.addEventListener('click', function(e) { e.stopPropagation(); });
+    document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeLightbox(); });
+    document.addEventListener('click', function(e) {
+        var a = e.target.closest('[data-lightbox]');
+        if (a) { e.preventDefault(); openLightbox(a.href); }
+    });
+}
+
+/* 文章目录侧边栏
+ * 返回 { links, update(pct, activeIdx) }，由外部统一 scroll 驱动。
+ */
+function initTocSidebar() {
+    var toc = document.getElementById('waxy-toc-sidebar');
+    if (!toc) return null;
+
+    var sidebarCol = toc.closest('.layout__sidebar');
+    var links      = toc.querySelectorAll('.waxy-toc-sidebar__link');
+    var progressEl = document.getElementById('waxy-toc-progress');
+    var barEl      = document.getElementById('waxy-toc-bar');
+
+    /* 占位 div，固定时撑开原来的空间 */
+    var ph = document.createElement('div');
+    toc.parentNode.insertBefore(ph, toc);
+    ph.style.display = 'none';
+
+    var isFixed = false;
+    /* 吸顶后与视口顶部保持的间隔，从 CSS 变量 --waxy-toc-fix-gap 读取，
+       和 .widget--toc.is-fixed 的 top 共用同一个数据源，不用手动同步两处数字 */
+    var FIX_GAP = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--waxy-toc-fix-gap')) || 12;
+
+    function fix() {
+        ph.style.height  = toc.offsetHeight + 'px';
+        ph.style.display = 'block';
+        toc.style.width  = (sidebarCol ? sidebarCol.offsetWidth : toc.offsetWidth) + 'px';
+        toc.classList.add('is-fixed');
+        isFixed = true;
+    }
+
+    function unfix() {
+        toc.classList.remove('is-fixed');
+        toc.style.width  = '';
+        ph.style.display = 'none';
+        isFixed = false;
+    }
+
+    return {
+        links: links,
+        update: function(pct, activeIdx) {
+            /* 吸附判断 */
+            var refTop = (isFixed ? ph : toc).getBoundingClientRect().top;
+            if (!isFixed && refTop <= FIX_GAP) fix();
+            else if (isFixed && refTop > FIX_GAP) unfix();
+
+            /* 固定后同步宽度（防 resize 错位） */
+            if (isFixed && sidebarCol) toc.style.width = sidebarCol.offsetWidth + 'px';
+
+            /* 进度 */
+            if (progressEl) progressEl.textContent = pct + '%';
+            if (barEl)      barEl.style.width = pct + '%';
+
+            /* 当前标题高亮 */
+            links.forEach(function(l) { l.classList.remove('is-active'); });
+            if (activeIdx >= 0) links[activeIdx].classList.add('is-active');
+        }
+    };
+}
+
+/* 文章页悬浮目录（<1000px）
+ * 返回 update(pct, activeIdx)，由外部统一 scroll 驱动。
+ */
+function initTocFloat() {
+    var toc = document.getElementById('waxy-toc-sidebar');
+    if (!toc) return null;
+
+    var srcLinks = toc.querySelectorAll('.waxy-toc-sidebar__link');
+    if (!srcLinks.length) return null;
+
+    /* 创建悬浮按钮 */
+    var btn = document.createElement('button');
+    btn.className = 'waxy-toc-float-btn';
+    btn.setAttribute('aria-label', '目录');
+    btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M4.5 11.5A.5.5 0 0 1 5 11h10a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5m-2-4A.5.5 0 0 1 3 7h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5m-2-4A.5.5 0 0 1 1 3h10a.5.5 0 0 1 0 1H1a.5.5 0 0 1-.5-.5"/></svg>';
+    document.body.appendChild(btn);
+
+    /* 创建面板 */
+    var panel = document.createElement('div');
+    panel.className = 'waxy-toc-float-panel';
+
+    var header = document.createElement('div');
+    header.className = 'waxy-toc-float-panel__header';
+    header.innerHTML =
+        '<span class="waxy-toc-float-panel__title">目录</span>' +
+        '<div class="waxy-toc-sidebar__bar"><div class="waxy-toc-sidebar__bar-fill" id="waxy-toc-float-bar"></div></div>' +
+        '<span class="waxy-toc-sidebar__progress" id="waxy-toc-float-progress">0%</span>';
+    panel.appendChild(header);
+
+    var origList = toc.querySelector('.waxy-toc-sidebar__list');
+    if (origList) {
+        panel.appendChild(origList.cloneNode(true));
+    }
+    document.body.appendChild(panel);
+
+    var floatLinks = panel.querySelectorAll('.waxy-toc-sidebar__link');
+    var floatBarEl = document.getElementById('waxy-toc-float-bar');
+    var floatPctEl = document.getElementById('waxy-toc-float-progress');
+
+    /* 开关面板 */
+    function openPanel()  { panel.classList.add('is-open');    btn.classList.add('is-open'); }
+    function closePanel() { panel.classList.remove('is-open'); btn.classList.remove('is-open'); }
+
+    btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        panel.classList.contains('is-open') ? closePanel() : openPanel();
+    });
+
+    /* 点击链接后关闭面板 */
+    floatLinks.forEach(function(link) {
+        link.addEventListener('click', function() { closePanel(); });
+    });
+
+    /* 点击面板外区域关闭 */
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.waxy-toc-float-btn') && !e.target.closest('.waxy-toc-float-panel')) {
+            closePanel();
+        }
+    });
+
+    return function(pct, activeIdx) {
+        if (floatBarEl) floatBarEl.style.width = pct + '%';
+        if (floatPctEl) floatPctEl.textContent = pct + '%';
+
+        floatLinks.forEach(function(l) { l.classList.remove('is-active'); });
+        if (activeIdx >= 0) floatLinks[activeIdx].classList.add('is-active');
+    };
+}
+
+/* 目录点击平滑滚动 */
+function initTocSmoothScroll() {
+    document.addEventListener('click', function(e) {
+        var link = e.target.closest('.waxy-toc-sidebar__link');
+        if (!link) return;
+
+        var href = link.getAttribute('href') || '';
+        if (href.charAt(0) !== '#') return;
+
+        var target = document.getElementById(href.slice(1));
+        if (!target) return;
+
+        e.preventDefault();
+        var top = target.getBoundingClientRect().top + window.pageYOffset - 20;
+        window.scrollTo({ top: top, behavior: 'smooth' });
+
+        if (history.pushState) history.pushState(null, '', href);
+    });
+}
+
+
+/* 亮暗色切换 */
+function initThemeToggle() {
+    var btns = document.querySelectorAll('[data-action="theme-toggle"]');
+    if (!btns.length) return;
+    btns.forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var isDark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('waxy-theme', isDark ? 'dark' : 'light');
+        });
+    });
+}
+
+/* 页面加载完成后初始化 */
+document.addEventListener('DOMContentLoaded', function() {
+    initNavToggle();     // 导航菜单抽屉（移动端）
+    initBackToTop();     // 回到顶部按钮
+    initLoadingFade();   // 加载动画淡出
+    initStickySlider();  // 置顶文章滚动
+    initAlertDismiss();  // Alert 关闭按钮
+    initShrinkBox();     // 收缩框
+    initLazyLoad();      // 图片懒加载
+    initLazyBg();        // 摘要模式封面图懒加载
+    initLightbox();      // 图片灯箱
+    initContentClamp();  // 列表页全文模式内容高度裁剪
+    initThemeToggle();   // 亮暗色切换
+    initTocSmoothScroll(); // 目录点击平滑滚动
+
+    /* TOC：合并 sidebar 与 float 的 scroll 监听，共用一次 pct + activeIdx 计算 */
+    var tocSidebar = initTocSidebar();
+    var tocFloat   = initTocFloat();
+
+    if (tocSidebar || tocFloat) {
+        var tocLinks = tocSidebar ? tocSidebar.links : [];
+
+        function onTocScroll() {
+            var scrollTop = window.scrollY || document.documentElement.scrollTop;
+            var docHeight = document.documentElement.scrollHeight - window.innerHeight;
+            var pct = docHeight > 0 ? Math.min(100, Math.round(scrollTop / docHeight * 100)) : 0;
+
+            var activeIdx = -1;
+            for (var i = 0; i < tocLinks.length; i++) {
+                var href = tocLinks[i].getAttribute('href');
+                if (!href) continue;
+                var el = document.getElementById(href.slice(1));
+                if (el && el.getBoundingClientRect().top <= 80) activeIdx = i;
+            }
+
+            if (tocSidebar) tocSidebar.update(pct, activeIdx);
+            if (tocFloat)   tocFloat(pct, activeIdx);
+        }
+
+        /* rAF 节流：滚动期间每帧最多计算一次，避免连续触发强制回流 */
+        var tocTicking = false;
+        function onTocScrollThrottled() {
+            if (tocTicking) return;
+            tocTicking = true;
+            window.requestAnimationFrame(function() {
+                onTocScroll();
+                tocTicking = false;
+            });
+        }
+
+        window.addEventListener('scroll', onTocScrollThrottled, { passive: true });
+        window.addEventListener('resize', onTocScrollThrottled, { passive: true });
+        onTocScroll();
+    }
+});
+
+/* 关于卡片"已在风雨中度过 X年X天X小时X分"，对应原主题 functions.php 的 getBuildTime()，
+   PHP 版是每次请求时算一次静态字符串，这里改成每分钟在浏览器端重新计算一次 */
+(function () {
+    var el = document.getElementById('waxy-site-age');
+    if (!el) return;
+    var start = new Date(el.getAttribute('data-start').replace(' ', 'T') + '+08:00').getTime();
+
+    function render() {
+        var diff = Math.floor((Date.now() - start) / 1000);
+        if (diff < 0) return;
+        var years = Math.floor(diff / 31556926); diff %= 31556926;
+        var days = Math.floor(diff / 86400); diff %= 86400;
+        var hours = Math.floor(diff / 3600); diff %= 3600;
+        var minutes = Math.floor(diff / 60);
+        el.textContent = years > 0
+            ? years + '年' + days + '天' + hours + '小时' + minutes + '分'
+            : days + '天' + hours + '小时' + minutes + '分';
+    }
+
+    render();
+    setInterval(render, 60000);
+})();

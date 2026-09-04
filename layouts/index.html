@@ -1,0 +1,7 @@
+{{ define "main" }}
+{{ $blogPages := where .Site.RegularPages "Section" "blog" }}
+{{ if eq (.Paginate $blogPages).PageNumber 1 }}
+  {{ partial "top-notice.html" . }}
+{{ end }}
+{{ partial "post-list.html" (dict "pages" $blogPages "page" .) }}
+{{ end }}

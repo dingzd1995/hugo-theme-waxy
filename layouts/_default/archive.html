@@ -1,0 +1,23 @@
+{{/* 对应原主题 page_articles.php：独立页面模板"归档"，按年分组列出全部文章。
+     class 是纯 post（不是 post--single），header 里直接放 archive-tip，
+     不放标题/分隔线——这几个结构细节跟 CSS 强绑定，改了样式就会跑偏 */}}
+{{ define "main" }}
+{{ $blogPages := where .Site.RegularPages "Section" "blog" }}
+<article id="arc" class="post">
+  <header class="post__head">
+    <div class="archive-tip">很好! 目前共计<strong>{{ len $blogPages }}</strong>篇文章，继续加油呀~</div>
+  </header>
+  <section class="post-content post__content">
+    <div id="archives" class="archive-list">
+      {{ range $blogPages.GroupByDate "2006" }}
+        <h2 class="archive-year">{{ .Key }}</h2>
+        {{ range .Pages }}
+        <div class="archive-item">
+          <a class="archive-meta" href="{{ .Permalink }}"><time>{{ .Date.Format "01/02" }}</time>{{ .Title }}</a>
+        </div>
+        {{ end }}
+      {{ end }}
+    </div>
+  </section>
+</article>
+{{ end }}

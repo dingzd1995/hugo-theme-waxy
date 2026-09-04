@@ -1,0 +1,7 @@
+<footer class="site-footer">
+  <div class="site-footer__inner">
+    <span>Copyright &copy; {{ now.Year }} <a href="{{ .Site.BaseURL }}" target="_blank">{{ .Site.Title }}</a></span><br>
+    <span>Powered by Hugo | Theme by <a rel="noopener" href="https://github.com/dingzd1995/typecho-theme-waxy" target="_blank">Waxy</a>{{ with .Site.Params.ICP }} | {{ . }}{{ end }}</span><br>
+  </div>
+</footer>
+<a id="back-to-top">{{ partial "icon.html" (dict "name" "menu-up") }}</a>

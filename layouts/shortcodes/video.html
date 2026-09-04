@@ -1,0 +1,6 @@
+{{- $src := .Get "src" | default "" -}}
+{{- $poster := .Get "poster" | default "" -}}
+{{- $preload := .Get "preload" | default "metadata" -}}
+{{- $width := .Get "width" | default "100%" -}}
+{{- $height := .Get "height" | default "100%" -}}
+<video class="post-video" src="{{ $src }}"{{ with $poster }} poster="{{ . }}"{{ end }} preload="{{ $preload }}" width="{{ $width }}" height="{{ $height }}"{{ if eq (.Get "autoplay") "true" }} autoplay{{ end }}{{ if eq (.Get "loop") "true" }} loop{{ end }}{{ if eq (.Get "muted") "true" }} muted{{ end }} controls>{{ .Inner }} 您的浏览器不支持 video 元素。</video>

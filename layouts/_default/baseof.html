@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  {{ partial "head-assets.html" . }}
+  <title>{{ if .IsHome }}{{ .Site.Title }}{{ else }}{{ .Title }} - {{ .Site.Title }}{{ end }}</title>
+  {{ partial "seo.html" . }}
+</head>
+<body>
+  {{ partial "loading-overlay.html" . }}
+  {{ partial "header.html" . }}
+  <section class="content-wrap">
+    <div class="layout">
+      {{/* Pagefind 按 data-pagefind-body 圈定索引范围。这个属性不放在 <main> 上
+           （那样连 post-nav 的"上一篇/下一篇"、评论区的"阅读量占位"这些跟正文
+           无关的文字也会被一起索引进去），而是各模板自己标在真正的内容容器
+           （<article>）上，列表页/首页/分类标签归档/搜索页自身都不标 → 整页
+           直接被 pagefind 跳过 */}}
+      <main class="layout__main">
+        {{ block "main" . }}{{ end }}
+      </main>
+      {{ partial "sidebar.html" . }}
+    </div>
+  </section>
+  {{ partial "footer.html" . }}
+  {{ partial "footer-scripts.html" . }}
+</body>
+</html>

@@ -1,0 +1,12 @@
+name = "Waxy"
+license = "MIT"
+licenselink = "https://github.com/dingzd/waxy-theme/blob/main/LICENSE"
+description = "从 Typecho Waxy 主题迁移到 Hugo 的静态博客主题"
+homepage = "https://www.idzd.top"
+tags = ["blog", "chinese", "search", "responsive"]
+features = ["pagefind search", "dark mode", "lazy loading", "excerpt/full-text list modes"]
+min_version = "0.165.0"
+
+[author]
+  name = "Dingzd"
+  homepage = "https://www.idzd.top"

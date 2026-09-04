@@ -1,0 +1,21 @@
+{{- /* 对应原主题 functions.php 的 getPicHtml()：正文里的 <img> 统一走居中 + 灯箱 +
+     懒加载包装，行为由 site.Params.picAlign / fancyboxs / jqlazyload 控制，
+     跟原主题的 picAlign / fancyboxs / JQlazyload 后台选项一一对应。
+
+     懒加载占位图特意用静态文件 /img/lazy.gif，不用 data: URI——Go html/template
+     的上下文转义分析一旦在任何模板的 src 属性里见过 data: URI，会连带把同一次构建里
+     其它模板完全无关的 url()（比如卡片封面图的 background-image）也一起判定成不安全，
+     渲染成 #ZgotmplZ 占位符。这是踩过的坑，别改回 data: URI。 */ -}}
+{{- $lazy := site.Params.jqlazyload -}}
+{{- $lightbox := site.Params.fancyboxs -}}
+{{- $center := ne site.Params.picAlign "left" -}}
+{{- if $center }}<center>{{ end -}}
+{{- if $lightbox }}<a data-lightbox="gallery" href="{{ .Destination }}">{{ end -}}
+{{- if $lazy -}}
+<img data-src="{{ .Destination }}" src="/img/lazy.gif" alt="{{ .Text }}"{{ with .Title }} title="{{ . }}"{{ end }}>
+{{- else -}}
+<img loading="lazy" src="{{ .Destination }}" alt="{{ .Text }}"{{ with .Title }} title="{{ . }}"{{ end }}>
+{{- end -}}
+{{- if $lightbox }}</a>{{ end -}}
+{{- with .Title }}<span class="imgtitle">{{ . }}</span>{{ end -}}
+{{- if $center }}</center>{{ end -}}

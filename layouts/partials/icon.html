@@ -1,0 +1,9 @@
+{{/* 对应原主题 lib/icons.php 的 waxy_icon($name, $extraClass)。用法：{{ partial "icon.html" (dict "name" "user" "class" "extra-class") }} */}}
+{{ $name := .name }}
+{{ $extra := .class }}
+{{ with index hugo.Data.icons.paths $name }}
+{{ $viewbox := index hugo.Data.icons.viewboxes $name }}
+{{ if not $viewbox }}{{ $viewbox = "0 0 16 16" }}{{ end }}
+{{ $class := "waxy-icon" }}{{ if $extra }}{{ $class = printf "%s %s" $class $extra }}{{ end -}}
+<svg xmlns="http://www.w3.org/2000/svg" class="{{ $class }}" width="1em" height="1em" viewBox="{{ $viewbox }}" fill="currentColor" aria-hidden="true">{{ . | safeHTML }}</svg>
+{{- end }}

@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  {{ partial "head-assets.html" . }}
+  <title>页面不存在 - {{ .Site.Title }}</title>
+  <meta name="robots" content="noindex">
+  <meta name="description" content="{{ site.Params.siteDescription }}">
+  <meta property="og:site_name" content="{{ .Site.Title }}">
+  <meta property="og:title" content="页面不存在 - {{ .Site.Title }}">
+  <meta property="og:description" content="{{ site.Params.siteDescription }}">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="页面不存在 - {{ .Site.Title }}">
+  <meta name="twitter:description" content="{{ site.Params.siteDescription }}">
+</head>
+<body>
+  {{ partial "loading-overlay.html" . }}
+  {{ partial "header.html" . }}
+  {{/* 对应原主题 404.php：没有侧边栏的单栏布局，.page-404 用 .col-full
+       占满 .layout 的两栏宽度，不走 baseof.html 里 main+sidebar 的两栏结构 */}}
+  <section class="content-wrap">
+    <div class="layout">
+      <div class="page-404 col-full">
+        <div class="page-404__card">
+          <div class="page-404__code" aria-hidden="true">404</div>
+          <h2 class="page-404__title">页面不存在</h2>
+          <p class="page-404__msg">你访问的页面已丢失或从未存在过。</p>
+          <div class="page-404__actions">
+            <a href="{{ .Site.BaseURL }}" class="btn btn--default page-404__btn">返回首页</a>
+            <a href="javascript:history.back()" class="btn btn--outline page-404__btn">返回上页</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  {{ partial "footer.html" . }}
+  {{ partial "footer-scripts.html" . }}
+</body>
+</html>

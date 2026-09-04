@@ -1,0 +1,15 @@
+{{/* baseof.html 和 404.html 共用的 <head> 静态资源：viewport/favicon/css 引用、
+     暗色模式初始化内联脚本（必须在 CSS 加载前同步执行，避免切换到暗色时先闪一下亮色） */}}
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+{{ with .Site.Params.faviconUrl }}<link rel="icon" href="{{ . }}">{{ end }}
+<link rel="stylesheet" href="{{ "css/waxy-main.css" | relURL }}">
+<link rel="stylesheet" href="{{ "css/code-enhance.css" | relURL }}">
+<script>
+  (function() {
+    var saved = localStorage.getItem('waxy-theme');
+    if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark');
+    }
+  })();
+</script>

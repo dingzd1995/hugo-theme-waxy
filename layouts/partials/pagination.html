@@ -1,0 +1,10 @@
+{{/* 对应原主题 post_list.php 底部的分页条：上一页/下一页图标 + "第 N 页 / 共 M 页"，
+     没有上一页/下一页时对应按钮直接不渲染（跟 Typecho 的 pageLink 行为一致）
+     入参: Hugo paginator 对象 */}}
+{{ if gt .TotalPages 1 }}
+<nav class="pagination" role="navigation">
+  {{ if .HasPrev }}<a href="{{ .Prev.URL }}" aria-label="Previous" class="pagination__prev">{{ partial "icon.html" (dict "name" "menu-left") }}</a>{{ end }}
+  <span class="pagination__info">第 {{ .PageNumber }} 页 / 共 {{ .TotalPages }} 页</span>
+  {{ if .HasNext }}<a href="{{ .Next.URL }}" aria-label="Next" class="pagination__next">{{ partial "icon.html" (dict "name" "menu-right") }}</a>{{ end }}
+</nav>
+{{ end }}

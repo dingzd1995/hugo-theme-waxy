@@ -1,0 +1,14 @@
+{{- /* 对应原主题 waxy_process_toc()：扫描正文 h1-h4，取 {level, id, text} 列表。
+     autoHeadingID 已经在 hugo.yaml 里开启，.Content 里每个标题都带 id，直接抓来用即可，
+     不用自己再造一遍 id。返回值：[]dict{level, id, text}，没有符合条件的标题时返回空 slice */ -}}
+{{- $items := slice -}}
+{{- range findRE `<h[1-4][^>]*id="[^"]*"[^>]*>[\s\S]*?</h[1-4]>` .Content -}}
+  {{- $h := . -}}
+  {{- $level := replaceRE `^<h([1-4]).*$` "$1" $h -}}
+  {{- $id := replaceRE `^<h[1-4][^>]*id="([^"]*)"[\s\S]*$` "$1" $h -}}
+  {{- $text := replaceRE `^<h[1-4][^>]*>([\s\S]*)</h[1-4]>$` "$1" $h | plainify | strings.TrimSpace -}}
+  {{- if $text -}}
+    {{- $items = $items | append (dict "level" $level "id" $id "text" $text) -}}
+  {{- end -}}
+{{- end -}}
+{{- return $items -}}

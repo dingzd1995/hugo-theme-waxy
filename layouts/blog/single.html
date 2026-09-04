@@ -1,0 +1,58 @@
+{{ define "main" }}
+{{ $postImg := partialCached "resolve-cover-img.html" . .RelPermalink }}
+{{ if .Params.hideCover }}{{ $postImg = "" }}{{ end }}
+<article id="post-{{ .Params.slug }}" class="post post--single" data-pagefind-body>
+  {{ if .Params.star }}<div class="post__featured" title="推荐文章">{{ partial "icon.html" (dict "name" "star") }}</div>{{ end }}
+  <header class="post__head{{ if $postImg }} post__head--has-bg{{ end }}"{{ if $postImg }} style="--post-bg:url('{{ $postImg }}')"{{ end }}>
+    <h1 class="post__title">{{ .Title }}</h1>
+    <section class="post-meta">
+      <span class="post-meta__author">{{ partial "icon.html" (dict "name" "user") }}{{ .Site.Params.authorName }}</span>
+      <time class="post-meta__date" datetime="{{ .Date.Format "2006-01-02" }}" data-pagefind-meta="date">{{ partial "icon.html" (dict "name" "calendar") }}{{ .Date.Format "2006年01月02日" }}</time>
+      {{ if .Params.category }}
+      <span class="post-meta__cat">
+        {{ partial "badge-group.html" (dict "items" .Params.category "icon" "folder-open" "taxonomy" "category" "modifier" " excerpt__badge--cat") }}
+      </span>
+      {{ end }}
+      <span class="post-meta__count">{{ partial "icon.html" (dict "name" "toc") }}{{ .WordCount }} 字</span>
+    </section>
+    <div class="post__border"></div>
+  </header>
+
+  <section class="post-content post__content">
+    {{ .Content }}
+  </section>
+
+  <footer class="post__footer">
+    {{ if .Params.tag }}
+    <div class="post__tags">
+      <div class="excerpt__badges">
+        {{ partial "badge-group.html" (dict "items" .Params.tag "icon" "tag" "taxonomy" "tag") }}
+      </div>
+    </div>
+    {{ end }}
+    <div class="post__permalink">最后修改于：{{ .Lastmod.Format "2006年01月02日 15:04" }}</div>
+  </footer>
+</article>
+
+<div class="post-nav">
+  <ul class="post-nav__list">
+    {{ with .PrevInSection }}
+    <li class="post-nav__item post-nav__item--prev"><span class="post-nav__label">{{ partial "icon.html" (dict "name" "menu-left" "class" "post-nav__arrow") }}上一篇</span><a class="post-nav__link" href="{{ .Permalink }}">{{ .Title }}</a></li>
+    {{ else }}
+    <li class="post-nav__item post-nav__item--prev post-nav__item--empty"><span class="post-nav__empty">没有更多了</span></li>
+    {{ end }}
+    {{ with .NextInSection }}
+    <li class="post-nav__item post-nav__item--next"><span class="post-nav__label">下一篇{{ partial "icon.html" (dict "name" "menu-right" "class" "post-nav__arrow") }}</span><a class="post-nav__link" href="{{ .Permalink }}">{{ .Title }}</a></li>
+    {{ else }}
+    <li class="post-nav__item post-nav__item--next post-nav__item--empty"><span class="post-nav__empty">没有更多了</span></li>
+    {{ end }}
+  </ul>
+</div>
+
+<div class="about-author">
+  <div id="comments">
+    {{/* 评论系统：先留占位容器，接入第三方评论服务（Waline/Artalk/...）时挂载在这里 */}}
+    <div id="comment-widget-placeholder" data-path="{{ .RelPermalink }}">评论占位</div>
+  </div>
+</div>
+{{ end }}

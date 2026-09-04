@@ -1,0 +1,126 @@
+{{- /* 对应原主题 header.php 的整套 SEO 头信息（description/canonical/OG/Twitter卡片/
+     文章结构化数据/BreadcrumbList），单作者静态站，去掉了原版里加密文章、作者归档等
+     跟这次迁移无关的分支 */ -}}
+{{- $isSearch := eq .Layout "search" -}}
+{{- $isPost := and (eq .Kind "page") (not $isSearch) -}}
+{{- $isBlogPost := and $isPost (eq .Section "blog") -}}
+
+{{- $title := .Site.Title -}}
+{{- if not .IsHome }}{{ $title = printf "%s - %s" .Title .Site.Title }}{{ end -}}
+
+{{- $desc := site.Params.siteDescription -}}
+{{- $img := "" -}}
+{{- $type := "website" -}}
+{{- if $isPost -}}
+  {{- $type = "article" -}}
+  {{- /* 从原始 Markdown 源码取摘要，而不是渲染后的 .Summary——
+       否则代码块/表格里的内容、Chroma 高亮转义出的 HTML 实体（如 &#34;）
+       会被当成正文摘要一起截进 description，跟原主题 getExcerpt() 的做法对齐：
+       先把 <!--more--> 之后、代码块、表格、图片、短代码都摘掉，再转纯文本 */ -}}
+  {{- $raw := .RawContent -}}
+  {{- $raw = replaceRE `(?s)<!--more-->.*` "" $raw -}}
+  {{- $raw = replaceRE "(?s)```.*?```|~~~.*?~~~" "" $raw -}}
+  {{- $raw = replaceRE "`[^`]*`" "" $raw -}}
+  {{- $raw = replaceRE `(?m)^[ \t]*\|.*\|[ \t]*$` "" $raw -}}
+  {{- $raw = replaceRE `!\[[^\]]*\]\([^)]*\)` "" $raw -}}
+  {{- $raw = replaceRE `\{\{[%<][^}]*[%>]\}\}` "" $raw -}}
+  {{- $raw = replaceRE `(?m)^[ \t]*[-|>|#]+[ ]` "" $raw -}}
+  {{- $plain := $raw | plainify | strings.TrimSpace -}}
+  {{- $plain = replaceRE `\s+` " " $plain -}}
+  {{- if $plain -}}{{- $desc = $plain -}}{{- end -}}
+  {{- if gt (len $desc) 160 -}}{{- $desc = substr $desc 0 160 -}}{{- end -}}
+  {{- $img = partialCached "resolve-cover-img.html" . .RelPermalink -}}
+{{- end -}}
+
+{{- $canonical := .Permalink -}}
+{{- if $isSearch -}}{{- $canonical = "search/" | absURL -}}{{- end -}}
+
+<meta name="description" content="{{ $desc }}">
+{{- if $isSearch }}
+<meta name="robots" content="noindex">
+{{- end }}
+{{- if $isPost }}
+<meta name="author" content="{{ site.Params.authorName }}">
+{{- end }}
+<link rel="canonical" href="{{ $canonical }}">
+<link rel="alternate" type="application/rss+xml" title="{{ .Site.Title }}" href="{{ "feed.xml" | absURL }}">
+{{- $paginatable := or (eq .Kind "home") (eq .Kind "section") (eq .Kind "term") (eq .Kind "taxonomy") }}
+{{- /* 首页列表只收录 blog 分区（见 index.html 的 $blogPages），这里如果直接用不带参数的
+     .Paginator 会用 .Pages（首页默认是全站 RegularPages，包含关于/归档/时间线等独立页）
+     先一步把分页器锁定成错误的集合——Hugo 同一页面第一次调用 .Paginate/.Paginator 用的
+     集合会被后续调用复用，不管后面传了什么。seo.html 在 <head> 里比正文更早渲染，
+     所以这里必须显式传跟正文一致的集合，独立页混进分页列表的 bug 就是从这来的 */ -}}
+{{- if $paginatable }}
+  {{- $paginator := "" }}
+  {{- if eq .Kind "home" }}
+    {{- $paginator = .Paginate (where .Site.RegularPages "Section" "blog") }}
+  {{- else }}
+    {{- $paginator = .Paginator }}
+  {{- end }}
+  {{- if $paginator.HasPrev }}
+<link rel="prev" href="{{ $paginator.Prev.URL | absURL }}">
+  {{- end }}
+  {{- if $paginator.HasNext }}
+<link rel="next" href="{{ $paginator.Next.URL | absURL }}">
+  {{- end }}
+{{- end }}
+<!-- Open Graph -->
+<meta property="og:site_name" content="{{ .Site.Title }}">
+<meta property="og:title" content="{{ $title }}">
+<meta property="og:description" content="{{ $desc }}">
+<meta property="og:url" content="{{ $canonical }}">
+<meta property="og:type" content="{{ $type }}">
+{{- if $img }}
+<meta property="og:image" content="{{ $img | absURL }}">
+{{- end }}
+{{- if $isBlogPost }}
+<meta property="article:published_time" content="{{ .Date.Format "2006-01-02T15:04:05-07:00" }}">
+<meta property="article:modified_time" content="{{ .Lastmod.Format "2006-01-02T15:04:05-07:00" }}">
+{{- with .Params.category }}
+<meta property="article:section" content="{{ partial "term-name.html" (dict "taxonomy" "category" "slug" (index . 0)) }}">
+{{- end }}
+{{- range .Params.tag }}
+<meta property="article:tag" content="{{ partial "term-name.html" (dict "taxonomy" "tag" "slug" .) }}">
+{{- end }}
+{{- end }}
+<!-- Twitter Card -->
+<meta name="twitter:card" content="{{ if $img }}summary_large_image{{ else }}summary{{ end }}">
+<meta name="twitter:title" content="{{ $title }}">
+<meta name="twitter:description" content="{{ $desc }}">
+{{- if $img }}
+<meta name="twitter:image" content="{{ $img | absURL }}">
+{{- end }}
+{{- if $isPost }}
+<script type="application/ld+json">
+{{ (dict
+  "@context" "https://schema.org"
+  "@type" (cond $isBlogPost "Article" "WebPage")
+  "headline" .Title
+  "description" $desc
+  "url" .Permalink
+  "datePublished" (.Date.Format "2006-01-02T15:04:05-07:00")
+  "dateModified" (.Lastmod.Format "2006-01-02T15:04:05-07:00")
+  "author" (dict "@type" "Person" "name" site.Params.authorName)
+  "publisher" (dict "@type" "Organization" "name" .Site.Title)
+) | jsonify | safeJS }}
+</script>
+{{- end }}
+{{- $bcJSON := "" }}
+{{- if $isPost }}
+  {{- $bcJSON = slice
+      (dict "@type" "ListItem" "position" 1 "name" "首页" "item" site.Home.Permalink)
+      (dict "@type" "ListItem" "position" 2 "name" .Title "item" .Permalink)
+      | jsonify }}
+{{- else if eq .Kind "term" }}
+  {{- $label := partial "taxonomy-label.html" .Parent.Section }}
+  {{- $bcJSON = slice
+      (dict "@type" "ListItem" "position" 1 "name" "首页" "item" site.Home.Permalink)
+      (dict "@type" "ListItem" "position" 2 "name" $label)
+      (dict "@type" "ListItem" "position" 3 "name" .Title "item" .Permalink)
+      | jsonify }}
+{{- else }}
+  {{- $bcJSON = slice (dict "@type" "ListItem" "position" 1 "name" "首页" "item" site.Home.Permalink) | jsonify }}
+{{- end }}
+<script type="application/ld+json">
+{{ (printf `{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":%s}` $bcJSON) | safeJS }}
+</script>

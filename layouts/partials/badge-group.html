@@ -1,0 +1,18 @@
+{{/* 对应原主题 functions.php 的 waxy_render_badge_group()：一组分类/标签徽章，
+     超过 max 个折叠成 +N，悬浮/聚焦展开 tip 列出其余项。
+     入参 dict: items ([]string), icon, taxonomy ("category"/"tag"), modifier (可选，附加 class，含前导空格), max (可选 int) */}}
+{{ $items := .items }}
+{{ if $items }}
+{{ $modifier := .modifier | default "" }}
+{{ $taxonomy := .taxonomy }}
+{{ $max := .max }}
+{{ $shown := $items }}
+{{ $rest := slice }}
+{{ if and $max (gt (len $items) $max) }}
+  {{ $shown = first $max $items }}
+  {{ $rest = after $max $items }}
+{{ end }}
+{{ partial "icon.html" (dict "name" .icon) }}
+{{ range $shown }}<a class="excerpt__badge{{ $modifier }}" href="{{ printf "/%s/%s/" $taxonomy . }}">{{ partial "term-name.html" (dict "taxonomy" $taxonomy "slug" .) }}</a>{{ end }}
+{{ if $rest }}<span class="excerpt__badge excerpt__badge--more" tabindex="0">+{{ len $rest }}<span class="excerpt__badge-tip">{{ range $rest }}<a class="excerpt__badge-tip__item{{ $modifier }}" href="{{ printf "/%s/%s/" $taxonomy . }}">{{ partial "term-name.html" (dict "taxonomy" $taxonomy "slug" .) }}</a>{{ end }}</span></span>{{ end }}
+{{ end }}

@@ -1,0 +1,12 @@
+{{/* 对应原主题 page_timeline.php：独立页面模板"时间线"。
+     class 必须是 post--timeline（不是 post--single），样式全部挂在这个类名下；
+     原版没有标题/分隔线 header，直接进正文；列表最前面插一条题记 <li>，
+     插在渲染后 HTML 的第一个 <ul> 后面 */}}
+{{ define "main" }}
+{{ $epigraph := `<li class="timeline-epigraph"><strong>从那一天起</strong><span class="timeline-epigraph__desc">风雨皆成往事，点滴记录在此</span></li>` }}
+<article class="post post--timeline" data-pagefind-body>
+  <section class="post-content post__content">
+    {{ replaceRE `<ul>` (printf "<ul>%s" $epigraph) .Content 1 | safeHTML }}
+  </section>
+</article>
+{{ end }}

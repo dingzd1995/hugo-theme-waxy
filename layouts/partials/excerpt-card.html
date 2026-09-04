@@ -1,0 +1,31 @@
+{{/* 首页/归档/分类/标签列表用的文章卡片，对应原主题 post_list.php 的"摘要模式"分支
+     （articles_list == 0，生产环境的实际配置） */}}
+{{ $img := partial "resolve-cover-img.html" . }}
+{{ if .Params.hideCover }}{{ $img = "" }}{{ end }}
+<article class="post">
+  {{ if .Params.star }}<div class="post__featured" title="推荐文章">{{ partial "icon.html" (dict "name" "star") }}</div>{{ end }}
+  <div class="excerpt">
+    {{ with $img }}<div class="excerpt__img" data-bg="{{ . }}"></div>{{ end }}
+    <div class="excerpt__body">
+      <div class="excerpt__title"><a href="{{ .Permalink }}">{{ .Title }}</a></div>
+      <a class="excerpt__text" href="{{ .Permalink }}">{{ .Summary | plainify | truncate 95 "…" }}</a>
+      <div class="excerpt__footer">
+        <div class="excerpt__info">
+          <div class="excerpt__item">{{ partial "icon.html" (dict "name" "user") }}{{ .Site.Params.authorName }}</div>
+          <div class="excerpt__item">{{ partial "icon.html" (dict "name" "calendar") }}{{ .Date.Format "2006-01-02" }}</div>
+          {{ if .Params.category }}
+          <div class="excerpt__badges">
+            {{ partial "badge-group.html" (dict "items" .Params.category "icon" "folder-open" "taxonomy" "category" "modifier" " excerpt__badge--cat" "max" 2) }}
+          </div>
+          {{ end }}
+          {{ if .Params.tag }}
+          <div class="excerpt__badges">
+            {{ partial "badge-group.html" (dict "items" .Params.tag "icon" "tag" "taxonomy" "tag" "max" 3) }}
+          </div>
+          {{ end }}
+        </div>
+        <a class="btn btn--default excerpt__more" href="{{ .Permalink }}">阅读全文{{ partial "icon.html" (dict "name" "menu-right") }}</a>
+      </div>
+    </div>
+  </div>
+</article>

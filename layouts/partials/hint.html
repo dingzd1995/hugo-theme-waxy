@@ -1,0 +1,3 @@
+{{/* info/warning/danger 三个 shortcode 共用的提示框结构，只有配色/图标/无障碍文案不同。
+     入参 dict: style ("info"/"warning"/"danger"), icon, label (sr-only 文案), inner (shortcode 的 .Inner) */}}
+<div class="hint hint--{{ .style }}">{{ partial "icon.html" (dict "name" .icon "class" (printf "hint--%s-icon" .style)) }}<span class="sr-only">{{ .label }}</span>{{ .inner }}</div>

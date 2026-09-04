@@ -1,0 +1,20 @@
+{{/* 文章列表渲染 + 分页，首页/归档(/blog/)/分类/标签共用。
+     对应原主题 post_list.php 的模式分支（articlesList: 1=全文 0=摘要，生产环境实际是 0）
+     入参 dict: pages ([]Page), page (当前渲染的 list/home 页面，用于 .Paginate) */}}
+{{ $pages := .pages }}
+{{ $paginator := .page.Paginate $pages }}
+{{ if eq (len $paginator.Pages) 0 }}
+<div class="empty-state">
+  {{ partial "icon.html" (dict "name" "folder-open" "class" "empty-state__icon") }}
+  <p class="empty-state__text">这里还没有文章</p>
+</div>
+{{ else }}
+{{ range $paginator.Pages }}
+  {{ if eq site.Params.articleslist 1 }}
+    {{ partial "post-card.html" . }}
+  {{ else }}
+    {{ partial "excerpt-card.html" . }}
+  {{ end }}
+{{ end }}
+{{ partial "pagination.html" $paginator }}
+{{ end }}

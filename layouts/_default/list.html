@@ -1,0 +1,27 @@
+{{ define "main" }}
+{{ if eq .Kind "taxonomy" }}
+<article class="post post--single">
+  <header class="post__head">
+    <h1 class="post__title">{{ .Title }}</h1>
+    <div class="post__border"></div>
+  </header>
+  <section class="post-content post__content">
+    <ul class="menu-list">
+      {{ range .Pages }}<li><a href="{{ .Permalink }}">{{ .Title }}</a></li>{{ end }}
+    </ul>
+  </section>
+</article>
+{{ else }}
+{{/* 对应原主题 archive.php 的面包屑：首页 > 分类/标签 > 当前名称。
+     /blog/ 这个纯列表页（Kind=section）原版也没有第二段，只显示"首页"一个crumb */}}
+<div class="breadcrumb">
+  <span class="breadcrumb__item"><a href="{{ .Site.BaseURL }}" title="{{ .Site.Title }}">首页</a></span>
+  {{ if eq .Kind "term" }}
+    {{ if or (eq .Parent.Section "category") (eq .Parent.Section "tag") }}
+    <span class="breadcrumb__item">{{ partial "taxonomy-label.html" .Parent.Section }}</span><span class="breadcrumb__item breadcrumb__item--active">{{ .Title }}</span>
+    {{ end }}
+  {{ end }}
+</div>
+{{ partial "post-list.html" (dict "pages" .Pages "page" .) }}
+{{ end }}
+{{ end }}

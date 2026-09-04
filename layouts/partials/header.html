@@ -1,0 +1,50 @@
+<nav class="site-header">
+  <div class="site-header__inner">
+    <a class="site-header__brand" href="{{ .Site.BaseURL }}">
+      {{ if .Site.Params.logoUrl }}<img src="{{ .Site.Params.logoUrl }}" height="45" alt="{{ .Site.Title }}">{{ else }}{{ .Site.Title }}{{ end }}
+    </a>
+
+    {{ if .Site.Params.navbarSearch }}
+    <div class="site-header__search-mobile">
+      <form method="get" action="{{ "search/" | relURL }}" role="search">
+        <label for="s-mobile" class="sr-only">搜索关键字</label>
+        <input aria-label="search input" type="text" id="s-mobile" name="q" class="search-form__input" placeholder="输入关键字搜索" />
+        <button type="submit" class="search-form__btn" aria-label="搜索"></button>
+      </form>
+    </div>
+    {{ end }}
+
+    <button class="waxy-theme-toggle waxy-theme-toggle--mobile" data-action="theme-toggle" aria-label="切换亮暗色模式">
+      {{ partial "icon.html" (dict "name" "theme-moon" "class" "icon-moon") }}{{ partial "icon.html" (dict "name" "theme-sun" "class" "icon-sun") }}
+    </button>
+
+    <button class="site-header__toggle" data-action="nav-toggle" aria-label="导航切换">{{ partial "icon.html" (dict "name" "menu-hamburger") }}</button>
+
+    <div class="nav" id="main-menu">
+      <ul class="nav__list">
+        {{ partialCached "nav-items.html" . .Permalink }}
+      </ul>
+      <button class="waxy-theme-toggle waxy-theme-toggle--desktop" data-action="theme-toggle" aria-label="切换亮暗色模式">
+        {{ partial "icon.html" (dict "name" "theme-moon" "class" "icon-moon") }}{{ partial "icon.html" (dict "name" "theme-sun" "class" "icon-sun") }}
+      </button>
+      {{ if .Site.Params.navbarSearch }}
+      <form class="nav__search" method="get" action="{{ "search/" | relURL }}" role="search">
+        <label for="s-desktop" class="sr-only">搜索关键字</label>
+        <input type="text" id="s-desktop" name="q" class="search-form__input" placeholder="输入关键字搜索" />
+        <button type="submit" class="search-form__btn" aria-label="搜索"></button>
+      </form>
+      {{ end }}
+    </div>
+  </div>
+</nav>
+
+<div class="waxy-drawer-overlay" id="waxy-drawer-overlay"></div>
+<div class="waxy-drawer" id="waxy-drawer">
+  <div class="waxy-drawer__body" id="waxy-drawer-body">
+    <div class="waxy-drawer__nav">
+      <ul class="nav__list">
+        {{ partialCached "nav-items.html" . .Permalink }}
+      </ul>
+    </div>
+  </div>
+</div>

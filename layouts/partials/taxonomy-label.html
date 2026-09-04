@@ -1,0 +1,3 @@
+{{- /* Section "category"/"tag" → 中文标签，list.html 面包屑和 seo.html BreadcrumbList JSON-LD 共用。
+     入参：taxonomy section 字符串（如 .Parent.Section） */ -}}
+{{- if eq . "category" -}}分类{{- else if eq . "tag" -}}标签{{- end -}}

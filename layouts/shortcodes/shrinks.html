@@ -1,0 +1,7 @@
+{{- $title := .Get "title" | default "" -}}
+{{- $style := .Get "style" | default "default" -}}
+{{- $checked := eq (.Get "checked") "true" -}}
+<div class="shrink-box{{ if ne $style "default" }} shrink-box--{{ $style }}{{ end }}{{ if $checked }} shrink-box--active{{ end }}">
+  <div class="shrink-box__title" data-action="shrink-toggle">{{ $title }}</div>
+  <div class="shrink-box__body"><div class="shrink-box__body-inner"><div class="shrink-box__body-content">{{ .Inner }}</div></div></div>
+</div>

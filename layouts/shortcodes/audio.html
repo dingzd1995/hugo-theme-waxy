@@ -1,0 +1,3 @@
+{{- $src := .Get "src" | default "" -}}
+{{- $preload := .Get "preload" | default "metadata" -}}
+<audio class="post-audio" src="{{ $src }}" preload="{{ $preload }}"{{ if eq (.Get "autoplay") "true" }} autoplay{{ end }}{{ if eq (.Get "loop") "true" }} loop{{ end }} controls>{{ .Inner }} 您的浏览器不支持 audio 元素。</audio>

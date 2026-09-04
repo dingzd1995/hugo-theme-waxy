@@ -1,0 +1,27 @@
+{{- /* 首页第一页专属的置顶文章滚动条 + 公告，对应原主题 functions.php 的 on_up_post()/on_top_text()，
+     原主题只在 index.php 的 $this->is('index')（首页第一页）里调用一次，分页页不重复展示 */ -}}
+{{- $stickyPages := slice -}}
+{{- range .Site.Params.sticky }}
+  {{- $p := site.GetPage (printf "/blog/%s" .) }}
+  {{- if $p }}{{ $stickyPages = $stickyPages | append $p }}{{ end }}
+{{- end }}
+{{- if $stickyPages }}
+<article id="top-article" class="post top-posts">
+  <div class="post__featured" title="置顶文章">{{ partial "icon.html" (dict "name" "bookmark") }}</div>
+  <div class="top-posts__body">
+    <div class="top-posts__slide">
+      <ul class="top-posts__list js-slide-list">
+        {{ range $stickyPages }}
+        <li><span><a href="{{ .Permalink }}">《{{ .Title }}》</a></span><span>（{{ .Date.Format "2006年01月02日" }}）</span></li>
+        {{ end }}
+      </ul>
+    </div>
+  </div>
+</article>
+{{- end }}
+{{- with .Site.Params.toptext }}
+<article id="top-text" class="post announce">
+  <div class="post__featured" title="公告">{{ partial "icon.html" (dict "name" "comment") }}</div>
+  <div class="announce__body">{{ . | safeHTML }}</div>
+</article>
+{{- end }}

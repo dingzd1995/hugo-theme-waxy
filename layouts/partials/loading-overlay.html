@@ -1,0 +1,10 @@
+{{- /* 全站加载动画，对应原主题 header.php 里 $this->options->load_html 开启时的输出，
+     每个页面 <body> 一打开就有，不止首页 */ -}}
+{{- if .Site.Params.loadHtml }}
+<div id="loading" class="loading__overlay">
+  <div class="loading">
+    <span></span><span></span><span></span><span></span>
+    <span></span><span></span><span></span>
+  </div>
+</div>
+{{- end }}
