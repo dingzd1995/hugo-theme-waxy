@@ -1,0 +1,21 @@
+{{- /* 文章头图 / 列表卡片图的背景兜底（没有真实封面图时用），single.html / post-card.html /
+     excerpt-card.html 共用。规则见 resolve-decor-bg.html 的说明。
+     返回 dict：mode=off 什么都不显示；mode=image 给 url（图池里选的传统图）；
+     mode=css 不加任何背景色，只挂一层 canvas 气泡（见 waxy-main.js 的 initDecorCanvas） */ -}}
+{{- $decor := partial "resolve-decor-bg.html" . -}}
+{{- $result := dict "mode" "off" -}}
+{{- if eq $decor.mode "hybrid" -}}
+  {{- if and site.Params.findfirstimage site.Params.firstimage -}}
+    {{- $pool := site.Params.firstimage -}}
+    {{- $name := index $pool (mod (hash.FNV32a .RelPermalink) (len $pool)) -}}
+    {{- with resources.Get (printf "covers/%s" $name) -}}
+      {{- $result = dict "mode" "image" "url" .RelPermalink -}}
+    {{- end -}}
+  {{- end -}}
+  {{- if eq $result.mode "off" -}}
+    {{- $result = dict "mode" "css" -}}
+  {{- end -}}
+{{- else if eq $decor.mode "css" -}}
+  {{- $result = dict "mode" "css" -}}
+{{- end -}}
+{{- return $result -}}

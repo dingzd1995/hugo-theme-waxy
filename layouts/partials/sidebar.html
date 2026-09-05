@@ -11,7 +11,18 @@
 {{/* 关于我的 */}}
 <div class="widget">
   <h4 class="widget__title">关于</h4>
-  {{ with .Site.Params.cardBg }}<div class="card__bg" style="background-image: url('{{ . }}')"></div>{{ end }}
+  {{/* 关于卡片背景：hybrid 模式下有配置 cardBg 就用图片，否则（css/off，或 hybrid 没配置）
+       不加背景色，只挂一层 canvas 气泡。规则见 resolve-decor-bg.html */}}
+  {{ $cardBgMode := site.Params.decorBgMode | default "hybrid" }}
+  {{ if ne $cardBgMode "off" }}
+    {{ if and (eq $cardBgMode "hybrid") site.Params.cardBg }}
+  <div class="card__bg" style="{{ printf "background-image:url('%s')" site.Params.cardBg | safeCSS }}"></div>
+    {{ else }}
+  <div class="card__bg card__bg--css">
+    <canvas class="post__decor-canvas" aria-hidden="true"></canvas>
+  </div>
+    {{ end }}
+  {{ end }}
   <div class="card">
     <div class="card__info">
       <img class="card__avatar" src="{{ .Site.Params.cardImg }}" alt="{{ .Site.Params.cardName }}">
@@ -141,27 +152,6 @@
       <li><a href="{{ (index .Pages 0).Permalink }}"><span class="menu-list__title">{{ .Key }}</span><span class="menu-list__count">{{ len .Pages }}篇</span></a></li>
       {{ end }}
     </ul>
-  </div>
-</div>
-{{ end }}
-
-
-{{/* 友情链接 */}}
-{{ if in .Site.Params.sidebarBlock "ShowLinks" }}
-<div class="widget">
-  <h4 class="widget__title">友情链接</h4>
-  <div class="widget__body recent-posts">
-    {{ range split (strings.TrimSpace .Site.Params.links) "\n" }}
-      {{ $row := split (strings.TrimSpace .) "," }}
-      {{ if ge (len $row) 4 }}
-      <div class="recent-posts__item">
-        <a rel="noopener" href="{{ index $row 1 }}" title="{{ index $row 3 }}" target="_blank" class="recent-posts__title">
-          <img src="{{ index $row 2 }}" alt="{{ index $row 0 }} logo" height="32" width="32" />
-          <span style="margin-left: 10px;">{{ index $row 0 }}</span>
-        </a>
-      </div>
-      {{ end }}
-    {{ end }}
   </div>
 </div>
 {{ end }}

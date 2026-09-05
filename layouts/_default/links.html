@@ -1,0 +1,42 @@
+{{/* 友情链接页：卡片自适应网格，数据源跟 sidebar.html 的
+     ShowLinks 一样是 .Site.Params.links，一行一条 "名称,链接,favicon,简介" */}}
+{{ define "main" }}
+<article class="post post--links" data-pagefind-body>
+  {{/* 跟归档页同一个骨架：header 放提示语（复用 .archive-tip），不是 single.html 那种
+       标题+分隔线的 header，所以不带 post--single（避免套上不需要的 flex 居中） */}}
+  <header class="post__head">
+    <div class="archive-tip">{{ .Content }}</div>
+  </header>
+  <section class="post-content post__content">
+    <div class="links-divider"></div>
+    <div class="friends-grid">
+      {{ range split (strings.TrimSpace .Site.Params.links) "\n" }}
+        {{ $row := split (strings.TrimSpace .) "," }}
+        {{ if ge (len $row) 4 }}
+        {{ $name := index $row 0 }}
+        {{ $url := index $row 1 }}
+        {{ $avatar := index $row 2 }}
+        {{ $desc := index $row 3 }}
+        {{/* favicon 经常裂图（外站没有/跨域失败），onerror 兜底换成本站生成的
+             首字母占位图，纯 SVG data URI，不依赖任何外部资源，天然 1:1 */}}
+        {{ $initial := upper (substr $name 0 1) }}
+        {{/* urlquery 会把空格编码成 +，data: URI 不认这个（不会当空格解码），SVG 属性之间
+             会粘连成非法 XML，图还是会裂——所以这里改用 base64，规避一切转义问题 */}}
+        {{/* dy='.35em' 是 SVG 文字垂直居中最稳的写法（补偿字体基线和字形视觉中心的偏差），
+             比单用 dominant-baseline 在各浏览器下都更准 */}}
+        {{ $svg := printf "<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48'><rect width='48' height='48' rx='10' fill='#1a1a1a'/><text x='50%%' y='50%%' dy='.35em' text-anchor='middle' fill='#fff' font-family='sans-serif' font-weight='bold' font-size='20'>%s</text></svg>" $initial }}
+        {{ $placeholder := printf "data:image/svg+xml;base64,%s" (base64Encode $svg) }}
+        <a class="friend-card" href="{{ $url }}" target="_blank" rel="noopener">
+          <img class="friend-card__avatar" src="{{ $avatar }}" alt="{{ $name }} logo" loading="lazy" onerror="this.onerror=null;this.src='{{ $placeholder | safeURL }}'">
+          <div class="friend-card__body">
+            <div class="friend-card__name">{{ $name }}</div>
+            <div class="friend-card__desc">{{ $desc }}</div>
+            <div class="friend-card__url">{{ $url }}</div>
+          </div>
+        </a>
+        {{ end }}
+      {{ end }}
+    </div>
+  </section>
+</article>
+{{ end }}

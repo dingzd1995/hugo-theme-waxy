@@ -455,6 +455,103 @@ function initThemeToggle() {
     });
 }
 
+/* 没有真实封面图、也没配置传统兜底图时的 canvas 增强层：画一群缓慢上浮、左右摇摆的彩色
+   气泡，不加任何背景色，JS 关闭/报错时 canvas 一片空白，不影响正常布局，纯粹是锦上添花。
+   气泡本体（Bubble 类：半径、上升速度、摇摆、七彩随机色）直接复用自 content/blog 里收录的
+   老 Waxy 主题"Canvas动画背景 漂浮气泡"脚本，原版是铺满整个页面挂在 body 上的固定背景；
+   这里改成一个容器一个 canvas（文章头图/关于卡片/列表缩略图），气泡数量按容器面积从
+   原版的 45（约等于 1920x1080 屏幕）等比例缩小，其余上升/摇摆/配色逻辑照搬。
+   多个 canvas（首页一堆列表卡片）共用一个 rAF 循环，只画当前可见区域的，避免一堆装饰
+   动画同时跑占 CPU */
+function initDecorCanvas() {
+    var canvases = document.querySelectorAll('.post__decor-canvas');
+    if (!canvases.length || !window.requestAnimationFrame) return;
+
+    var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var items = [];
+
+    function Bubble(item) {
+        this.item = item;
+        this.init(true); // 首次初始化，随机散落在容器各处
+    }
+    Bubble.prototype.init = function(isFirstTime) {
+        var item = this.item;
+        this.radius = Math.random() * (Math.min(item.w, item.h) * 0.14) + Math.min(item.w, item.h) * 0.03;
+        this.x = Math.random() * item.w;
+        // 首次随机分布满容器，后续则严格从底部（容器高度 + 半径）升起
+        this.y = isFirstTime ? Math.random() * item.h : item.h + this.radius;
+        this.vy = -(Math.random() * 0.5 + 0.2); // 上升速度
+        this.wobbleSpeed = Math.random() * 0.02; // 左右摇摆频率
+        this.wobble = Math.random() * Math.PI; // 初始摇摆弧度
+        // 七彩随机色：HSL 色相(0~360) 完美覆盖彩虹色系，饱和度85%明度65%透明度.25
+        this.color = 'hsla(' + Math.floor(Math.random() * 360) + ',85%,65%,.25)';
+    };
+    Bubble.prototype.update = function() {
+        this.y += this.vy;
+        this.wobble += this.wobbleSpeed;
+        this.x += Math.sin(this.wobble) * 0.35; // 模拟水流左右晃动
+        if (this.y < -this.radius) this.init(false); // 飘出顶部后从底部重新升起
+    };
+    Bubble.prototype.draw = function(ctx) {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = this.color;
+        ctx.fill();
+    };
+
+    canvases.forEach(function(canvas) {
+        var ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        var item = { canvas: canvas, ctx: ctx, w: 0, h: 0, visible: true, bubbles: [] };
+        items.push(item);
+
+        function resize() {
+            var rect = canvas.getBoundingClientRect();
+            if (!rect.width || !rect.height) return;
+            var dpr = Math.min(window.devicePixelRatio || 1, 2);
+            item.w = Math.round(rect.width);
+            item.h = Math.round(rect.height);
+            canvas.width = item.w * dpr;
+            canvas.height = item.h * dpr;
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            if (!item.bubbles.length) {
+                // 原版 45 个气泡对应约 1920x1080 全屏，按容器面积等比例缩小，6~24 个之间
+                var count = Math.max(6, Math.min(24, Math.round(45 * (item.w * item.h) / (1920 * 1080))));
+                for (var i = 0; i < count; i++) item.bubbles.push(new Bubble(item));
+            }
+        }
+        resize();
+        window.addEventListener('resize', resize);
+
+        if (window.IntersectionObserver) {
+            new IntersectionObserver(function(entries) {
+                entries.forEach(function(entry) { item.visible = entry.isIntersecting; });
+            }, { rootMargin: '100px' }).observe(canvas);
+        }
+    });
+
+    function drawItem(item) {
+        if (!item.w || !item.h) return;
+        item.ctx.clearRect(0, 0, item.w, item.h);
+        item.bubbles.forEach(function(b) {
+            b.update();
+            b.draw(item.ctx);
+        });
+    }
+
+    if (reduceMotion) {
+        items.forEach(function(item) { drawItem(item); });
+        return;
+    }
+
+    function loop() {
+        items.forEach(function(item) { if (item.visible) drawItem(item); });
+        requestAnimationFrame(loop);
+    }
+    requestAnimationFrame(loop);
+}
+
 /* 页面加载完成后初始化 */
 document.addEventListener('DOMContentLoaded', function() {
     initNavToggle();     // 导航菜单抽屉（移动端）
@@ -465,6 +562,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initShrinkBox();     // 收缩框
     initLazyLoad();      // 图片懒加载
     initLazyBg();        // 摘要模式封面图懒加载
+    initDecorCanvas();   // 没有封面图/传统兜底图时的 canvas 气泡增强层
     initLightbox();      // 图片灯箱
     initContentClamp();  // 列表页全文模式内容高度裁剪
     initThemeToggle();   // 亮暗色切换

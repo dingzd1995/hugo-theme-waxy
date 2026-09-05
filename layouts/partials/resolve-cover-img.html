@@ -1,7 +1,8 @@
-{{- /* 对应原主题 functions.php 的 waxy_resolve_cover_img() + getFirstImg()：
-     优先用 front matter 的 img 字段，否则取正文里第一张 <img> 的图片地址，
-     再否则从 site.Params.firstImage 兜底图池随机挑一张（需 site.Params.findFirstImage 开启）。
-     入参: page（. 本身即可），返回图片 URL 字符串，没有则返回空字符串 */ -}}
+{{- /* 对应原主题 functions.php 的 waxy_resolve_cover_img() + getFirstImg()，但只解析"真实"
+     封面图：front matter 的 img 字段，否则取正文里第一张 <img> 的图片地址。
+     没有真实封面图时的装饰性兜底（图池 / canvas 气泡）改到 resolve-post-bg.html 里处理，
+     og:image 用的爬虫兜底图在 resolve-og-image.html 里处理，两边都会先调用本 partial。
+     入参: page（. 本身即可），返回图片 URL 字符串，没有真实封面图则返回空字符串 */ -}}
 {{- $img := "" -}}
 {{- if .Params.img -}}
   {{- $img = .Params.img -}}
@@ -17,10 +18,6 @@
     {{- if $srcTags -}}
       {{- $img = replaceRE "^.* src=\"([^\"]+)\".*$" "$1" (index $srcTags 0) -}}
     {{- end -}}
-  {{- end -}}
-  {{- if and (not $img) site.Params.findfirstimage site.Params.firstimage -}}
-    {{- $pool := site.Params.firstimage -}}
-    {{- $img = index $pool (mod (hash.FNV32a .RelPermalink) (len $pool)) -}}
   {{- end -}}
 {{- end -}}
 {{- return $img -}}

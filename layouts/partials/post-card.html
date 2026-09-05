@@ -1,9 +1,24 @@
 {{/* 首页/归档/分类/标签列表用的文章卡片，对应原主题 post_list.php 的"全文模式"分支 */}}
 {{ $listImg := partial "resolve-cover-img.html" . }}
 {{ if .Params.hideCover }}{{ $listImg = "" }}{{ end }}
+{{/* 没有真实封面图时的装饰背景兜底，规则跟 single.html 一致，见 resolve-post-bg.html */}}
+{{ $bg := dict "mode" "off" }}
+{{ if not $listImg }}{{ $bg = partial "resolve-post-bg.html" . }}{{ end }}
+{{ $headClass := "" }}
+{{ $headStyle := "" }}
+{{ if $listImg }}
+  {{ $headClass = " post__head--has-bg" }}
+  {{ $headStyle = printf "--post-bg:url('%s')" $listImg | safeCSS }}
+{{ else if eq $bg.mode "image" }}
+  {{ $headClass = " post__head--has-bg" }}
+  {{ $headStyle = printf "--post-bg:url('%s')" $bg.url | safeCSS }}
+{{ else if eq $bg.mode "css" }}
+  {{ $headClass = " post__head--css-bg" }}
+{{ end }}
 <article id="post-{{ .Params.slug }}" class="post">
   {{ if .Params.star }}<div class="post__featured" title="推荐文章">{{ partial "icon.html" (dict "name" "star") }}</div>{{ end }}
-  <div class="post__head{{ if $listImg }} post__head--has-bg{{ end }}"{{ if $listImg }} style="--post-bg:url('{{ $listImg }}')"{{ end }}>
+  <div class="post__head{{ $headClass }}"{{ if $headStyle }} style="{{ $headStyle }}"{{ end }}>
+    {{ if eq $bg.mode "css" }}<canvas class="post__decor-canvas" aria-hidden="true"></canvas>{{ end }}
     <h1 class="post__title"><a href="{{ .Permalink }}">{{ .Title }}</a></h1>
     <div class="post-meta">
       <span class="post-meta__author">{{ partial "icon.html" (dict "name" "user") }}{{ .Site.Params.authorName }}</span>

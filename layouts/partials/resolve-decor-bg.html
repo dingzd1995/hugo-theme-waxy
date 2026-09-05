@@ -1,0 +1,16 @@
+{{- /* 装饰性背景兜底（没有真实封面图时用）的模式判断，被 resolve-post-bg.html 共用。
+     site.Params.decorBgMode 三选一：
+       hybrid（默认）：调用方若配置了传统兜底图（firstImage 图池）就用图片，没配置则退回
+                       纯 canvas 气泡（不加背景色，见 waxy-main.js 的 initDecorCanvas）
+       css：不管有没有配置传统兜底图，一律用纯 canvas 气泡
+       off：完全关闭装饰背景
+     只给出 mode，"有没有配置传统图片"由调用方自己判断——single/post-card 用 firstImage
+     图池，sidebar 直接判断 cardBg，形态不一样，不适合在这里统一处理 */ -}}
+{{- $mode := site.Params.decorBgMode | default "hybrid" -}}
+{{- $result := dict "mode" "off" -}}
+{{- if eq $mode "css" -}}
+  {{- $result = dict "mode" "css" -}}
+{{- else if ne $mode "off" -}}
+  {{- $result = dict "mode" "hybrid" -}}
+{{- end -}}
+{{- return $result -}}

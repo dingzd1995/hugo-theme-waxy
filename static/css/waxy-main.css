@@ -940,6 +940,35 @@ html.dark .waxy-theme-toggle .icon-sun  { display: block; }
     transform: scale(1.05);
 }
 
+/* 没有真实封面图、也没配置传统兜底图时：不加任何背景色，保持默认（跟没有 --has-bg
+   时一样的紧凑布局），只挂一层 canvas 气泡做点缀，不喧宾夺主 */
+.post__head--css-bg {
+    position: relative;
+    overflow: hidden;
+}
+
+.post__head--css-bg .post__title,
+.post__head--css-bg .post-meta,
+.post__head--css-bg .post__border {
+    position: relative;
+    z-index: 1;
+}
+
+/* canvas 气泡层：直接复用自 content/blog 里收录的老 Waxy 主题"漂浮气泡"脚本
+   （见 waxy-main.js 的 initDecorCanvas 说明），普通透明度叠在默认背景上，
+   JS 关闭/报错时 canvas 一片空白，不影响正常布局 */
+.post__decor-canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.post__head--css-bg .post__decor-canvas {
+    position: absolute;
+    inset: 0;
+}
+
 .post__head--has-bg .post__title,
 .post__head--has-bg .post-meta,
 .post__head--has-bg .post__border {
@@ -1031,6 +1060,15 @@ html.dark .waxy-theme-toggle .icon-sun  { display: block; }
 
 .excerpt__img--loaded::after {
     opacity: 1;
+}
+
+/* 列表卡片没有真实封面图、也没配置传统兜底图时：不加背景色，只挂 canvas 气泡。
+   ::after 是生成内容里最后画的，canvas 这个真实子元素反而会画在它下面，
+   所以要显式 z-index 才能让 canvas 盖上去 */
+.excerpt__img--css-bg .post__decor-canvas {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
 }
 
 .excerpt__img__loading {
@@ -2382,6 +2420,12 @@ html.dark .post-meta .excerpt__badge-tip__item.excerpt__badge--cat {
     border-radius: var(--waxy-radius) var(--waxy-radius) 0 0;
 }
 
+/* 关于卡片没配置 cardBg（或 decorBgMode 为 css）时：不加背景色，只挂 canvas 气泡 */
+.card__bg--css .post__decor-canvas {
+    position: absolute;
+    inset: 0;
+}
+
 .card {
     position: relative;
     padding: 1rem 1.2rem;
@@ -2391,16 +2435,22 @@ html.dark .post-meta .excerpt__badge-tip__item.excerpt__badge--cat {
     text-align: center;
 }
 
+/* .friend-card__avatar 复用这两条悬停旋转声明（友情链接页头像跟"关于"卡片头像视觉语言统一） */
+.card__avatar,
+.friend-card__avatar {
+    transition: transform .5s;
+}
+
+.card__avatar:hover,
+.friend-card:hover .friend-card__avatar {
+    transform: rotate(360deg);
+}
+
 .card__avatar {
     width: 150px;
     height: 150px;
     border-radius: 50%;
-    transition: transform .5s;
     box-shadow: 0 0 0 5px var(--waxy-surface);
-}
-
-.card__avatar:hover {
-    transform: rotate(360deg);
 }
 
 .card__name {
@@ -2466,6 +2516,93 @@ html.dark .post-meta .excerpt__badge-tip__item.excerpt__badge--cat {
 
 .card__footer {
     text-align: center;
+    color: var(--waxy-text-muted);
+}
+
+
+/* ── 友情链接页：自适应网格，卡片等高（BEM）──────────────
+   auto-fill + minmax 按可用宽度自动决定每行几张，不用手动断点；
+   卡片固定高度，超长的名称/简介/链接单行省略号截断，保证每张卡片大小统一 */
+/* header 结构跟归档页完全一样（.post__head 里放 .archive-tip），所以直接照抄
+   #arc .post__head 那条覆盖：没有标题，不需要默认的 30px 顶部大留白。
+   正因为结构一致，.archive-tip 的配色/字号、.post__head+.post-content 的 28px 间距
+   全部原样继承，不需要再为这页单独写一条 */
+.post--links .post__head {
+    padding-top: 0;
+}
+
+/* 分隔线也跟归档页 .archive-year 保持一致（1px 细线），不用 .post__border 那条更粗的强调线；
+   clear: both 是因为上面的 .archive-tip 是浮动的（archive-year 同样需要清一下） */
+.links-divider {
+    clear: both;
+    border-bottom: 1px solid var(--waxy-border);
+    margin: 16px 0 20px;
+}
+
+.friends-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 16px;
+}
+
+.friend-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    height: 84px;
+    padding: 16px;
+    background: var(--waxy-bg-soft);
+    border: 1px solid var(--waxy-border);
+    border-radius: var(--waxy-radius);
+    color: var(--waxy-text);
+    text-decoration: none;
+    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.friend-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--waxy-primary);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    text-decoration: none;
+    color: var(--waxy-text);
+}
+
+.friend-card__avatar {
+    flex: none;
+    width: 48px;
+    height: 48px;
+    border-radius: var(--waxy-radius);
+    object-fit: cover;
+    background: var(--waxy-surface);
+    box-shadow: 0 0 0 3px var(--waxy-surface);
+}
+
+.friend-card__body {
+    min-width: 0;
+}
+
+.friend-card__name,
+.friend-card__desc,
+.friend-card__url {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.friend-card__name {
+    font-weight: 500;
+    color: var(--waxy-heading);
+}
+
+.friend-card__desc {
+    margin-top: 3px;
+    font-size: 0.9em;
+    color: var(--waxy-meta);
+}
+
+.friend-card__url {
+    margin-top: 3px;
+    font-size: 0.8em;
     color: var(--waxy-text-muted);
 }
 

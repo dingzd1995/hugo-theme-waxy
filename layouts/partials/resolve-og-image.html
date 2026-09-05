@@ -1,0 +1,35 @@
+{{- /* 给爬虫/社交平台抓取用的分享预览图：有真实封面图（正文图/front matter img）直接用；
+     没有的话在构建期生成一张小 webp——从兜底底图池里按 hash 选一张压暗做底，
+     把标题文字烧录进像素，只出现在 <meta og:image>/<meta twitter:image> 里，
+     浏览器不会预加载它，只有社交平台爬虫抓取分享卡片时才会请求，天然按需加载。
+     跟页面装饰背景开关 site.Params.decorBgMode 无关：没有真实封面时始终生成，
+     保证分享卡片始终有预览图可看，不受"关闭/强制css"影响 */ -}}
+{{- $img := partialCached "resolve-cover-img.html" . .RelPermalink -}}
+{{- if not $img -}}
+  {{- $pool := slice "header_bg_1.jpg" "header_bg_2.jpg" "header_bg_3.jpg" "header_bg_4.jpg" -}}
+  {{- $name := index $pool (mod (hash.FNV32a .RelPermalink) (len $pool)) -}}
+  {{- $base := resources.Get (printf "covers/%s" $name) -}}
+  {{- $font := resources.Get "fonts/SmileySans-Oblique.otf" -}}
+  {{- if and $base $font -}}
+    {{- $resized := $base.Fill "800x420 Center webp q78" -}}
+    {{- $title := .Title | truncate 22 "…" -}}
+    {{- $filters := slice
+        (images.Brightness -22)
+        (images.Saturation -15)
+        (images.Text $title (dict
+          "color" "#ffffff"
+          "size" 46
+          "x" 44
+          "y" 44
+          "linespacing" 10
+          "alignx" "left"
+          "aligny" "bottom"
+          "font" $font
+        ))
+    -}}
+    {{- with $resized | images.Filter $filters -}}
+      {{- $img = .RelPermalink -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- return $img -}}
