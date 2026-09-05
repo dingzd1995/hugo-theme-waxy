@@ -29,7 +29,7 @@
   {{- $plain = replaceRE `\s+` " " $plain -}}
   {{- if $plain -}}{{- $desc = $plain -}}{{- end -}}
   {{- if gt (len $desc) 160 -}}{{- $desc = substr $desc 0 160 -}}{{- end -}}
-  {{- $img = partialCached "resolve-cover-img.html" . .RelPermalink -}}
+  {{- $img = partialCached "resolve-og-image.html" . .RelPermalink -}}
 {{- end -}}
 
 {{- $canonical := .Permalink -}}

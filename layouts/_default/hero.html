@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  {{ partial "head-assets.html" . }}
+  <title>{{ .Title }} - {{ .Site.Title }}</title>
+  {{ partial "seo.html" . }}
+  <style>
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--waxy-bg);
+    }
+    .hero {
+      max-width: 720px;
+      padding: 0 24px;
+      text-align: center;
+    }
+    .hero__title {
+      margin: 0 0 16px;
+      font-size: clamp(32px, 6vw, 56px);
+      font-weight: 700;
+      color: var(--waxy-heading);
+      letter-spacing: 0.02em;
+    }
+    .hero__subtitle {
+      margin: 0 0 40px;
+      font-size: clamp(16px, 2.4vw, 20px);
+      color: var(--waxy-text-light);
+      line-height: 1.7;
+    }
+    .hero__btn {
+      display: inline-block;
+      padding: 12px 32px;
+      border-radius: var(--waxy-radius);
+      background: var(--waxy-primary);
+      color: #fff;
+      font-size: 16px;
+      text-decoration: none;
+      transition: background 0.2s ease;
+    }
+    .hero__btn:hover { background: var(--waxy-primary-hover); }
+    .hero__home {
+      display: block;
+      margin-top: 32px;
+      font-size: 13px;
+      color: var(--waxy-text-muted);
+      text-decoration: none;
+    }
+    .hero__home:hover { color: var(--waxy-primary); }
+  </style>
+</head>
+<body>
+  <div class="hero" data-pagefind-body>
+    {{ with .Params.hero_title }}<h1 class="hero__title">{{ . }}</h1>{{ end }}
+    {{ with .Params.hero_subtitle }}<p class="hero__subtitle">{{ . }}</p>{{ end }}
+    {{ if .Params.hero_btn_text }}
+      <a class="hero__btn" href="{{ .Params.hero_btn_link | default "/" }}">{{ .Params.hero_btn_text }}</a>
+    {{ end }}
+    <a class="hero__home" href="{{ "/" | relLangURL }}">返回首页</a>
+  </div>
+  {{ partial "footer-scripts.html" . }}
+</body>
+</html>
