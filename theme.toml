@@ -1,6 +1,6 @@
 name = "Waxy"
 license = "MIT"
-licenselink = "https://github.com/dingzd/waxy-theme/blob/main/LICENSE"
+licenselink = "https://github.com/dingzd1995/hugo-theme-waxy/blob/main/LICENSE"
 description = "从 Typecho Waxy 主题迁移到 Hugo 的静态博客主题"
 homepage = "https://www.idzd.top"
 tags = ["blog", "chinese", "search", "responsive"]

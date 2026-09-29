@@ -1,0 +1,139 @@
+# ============================================================
+#  Hugo Theme Waxy 示例配置
+#  复制到站点根目录的 hugo.yaml，按需修改即可
+# ============================================================
+
+# 站点地址，末尾保留斜杠
+baseURL: https://example.com/
+# 主题目录名，需与 themes/ 下的文件夹名一致
+theme: waxy-theme
+locale: zh-CN
+title: "我的博客"
+# 中文站点务必开启，否则字数统计、摘要截断会不准确
+hasCJKLanguage: true
+enableRobotsTXT: true
+
+# 每页文章数
+pagination:
+  pagerSize: 10
+
+# 分类法：key/value 都用单数，URL 为 /category/xxx/、/tag/xxx/
+# 文章 front matter 中对应使用 category / tag 字段
+taxonomies:
+  category: category
+  tag: tag
+
+# 文章链接格式，:slug 取 front matter 的 slug 字段
+permalinks:
+  blog: /archives/:slug/
+
+# RSS 输出文件名：/feed.xml
+outputFormats:
+  RSS:
+    baseName: feed
+
+sitemap:
+  changeFreq: weekly
+  priority: 0.5
+
+markup:
+  goldmark:
+    renderer:
+      # 允许正文中直接书写 HTML
+      unsafe: true
+    parser:
+      # 标题自动生成 id，文章目录（TOC）依赖此项
+      autoHeadingID: true
+  highlight:
+    # 代码高亮配色，可选值见 https://xyproto.github.io/splash/docs/
+    style: base16-snazzy
+    # 使用内联样式，更换配色无需重新生成 CSS
+    noClasses: true
+    # 显示行号
+    lineNos: true
+    # 行号用 <span> 而非 <table>，长行换行时行号不会错位
+    lineNumbersInTable: false
+    codeFences: true
+
+params:
+  # ---------------- 基础信息 ----------------
+  # 导航栏 logo
+  logoUrl: "/icon/logo.webp"
+  # 浏览器标签页图标
+  faviconUrl: "/icon/favicon.ico"
+  # 站点描述，用于 <meta name="description"> 与 Open Graph
+  siteDescription: "个人技术博客，记录并分享学习中的收获与乐趣！"
+  # 文章作者署名
+  authorName: "Waxy"
+  # 建站时间，页脚据此显示已运行天数
+  startTime: "2019-11-23 13:55:00"
+  # ICP 备案号，留空则不显示
+  ICP: ""
+
+  # ---------------- 侧边栏关于卡片 ----------------
+  # 卡片背景图，留空时按 decorBgMode 决定是否显示装饰背景
+  cardBg: ""
+  # 头像
+  cardImg: "/icon/avatar_150.webp"
+  # 名称
+  cardName: "Waxy"
+  # 一句话简介
+  cardDescription: "轻量高效，悦于书写"
+  # 社交图标，每行一条，格式：图标名,链接
+  # 可用图标：rss github facebook twitter telegram email discord weibo wechat
+  # 不认识的图标名会被跳过
+  cardlinks: |
+    rss,/feed.xml
+    github,https://github.com/yourname
+    email,mailto:you@example.com
+
+  # ---------------- 侧边栏 ----------------
+  # 要显示的组件，按数组顺序从上到下排列，删掉某项即可隐藏
+  #   ShowAbouts      关于卡片
+  #   ShowCategory    分类
+  #   ShowTags        标签云
+  #   ShowRecentPosts 最新文章
+  #   ShowArchive     按月归档
+  sidebarBlock: ["ShowAbouts", "ShowCategory", "ShowTags", "ShowRecentPosts", "ShowArchive"]
+
+  # ---------------- 文章列表 ----------------
+  # 列表模式：0 = 摘要卡片，1 = 全文
+  articlesList: 0
+  # 置顶文章，填文章的 slug
+  sticky: []
+  # 顶部公告栏，支持 HTML，留空则不显示
+  toptext: '欢迎访问我的博客~'
+
+  # ---------------- 封面与装饰背景 ----------------
+  # 文章封面优先级：front matter 的 img > 正文第一张图（需开启 findFirstImage）> 随机图池
+  findFirstImage: true
+  # 随机图池：只写文件名，图片放在站点的 assets/covers/ 目录下
+  # 留空则没有封面的文章不使用图片兜底
+  firstImage: []
+  #  - header_bg_1.jpg
+  #  - header_bg_2.jpg
+  # 装饰背景模式（无封面文章的头图兜底 + 关于卡片背景）：
+  #   hybrid 优先用 firstImage / cardBg 中的图片，没配置时退回 canvas 气泡（默认）
+  #   css    始终使用 canvas 气泡
+  #   off    完全关闭装饰背景
+  decorBgMode: "hybrid"
+
+  # ---------------- 页面功能 ----------------
+  # 页面加载动画
+  loadHtml: true
+  # 文章页显示目录
+  showToc: true
+  # 导航栏显示搜索框（需创建搜索页并运行 pagefind，见 README）
+  navbarSearch: true
+  # 正文图片对齐方式：center（居中）或 left（左对齐）
+  picAlign: "center"
+  # 点击图片放大（灯箱）
+  fancyboxs: true
+  # 图片懒加载
+  jqlazyload: true
+
+  # ---------------- 友情链接 ----------------
+  # 在 layout: links 的页面中展示，每行一条
+  # 格式：名称,链接,图标地址,描述（描述中不要包含英文逗号）
+  links: |
+    IDZD,https://www.idzd.top/,https://www.idzd.top/favicon.ico,乐于探索
